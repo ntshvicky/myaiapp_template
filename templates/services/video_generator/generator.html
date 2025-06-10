@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Video Generator{% endblock %}
+
+{% block main_content %}
+  <h1>Video Generator</h1>
+  <div class="input-group">
+    <textarea id="prompt-input" placeholder="Enter video prompt…" required></textarea>
+    <button id="gen-btn"><i class="fa fa-video-camera"></i></button>
+  </div>
+  <div id="videos-list">
+    {% for v in videos %}
+      <div class="generated-video">
+        <video controls src="{{ v.video_url }}"></video>
+        <p>{{ v.prompt }}</p>
+      </div>
+    {% endfor %}
+  </div>
+  <input type="hidden" id="session-id" value="{{ session.id }}">
+{% endblock %}
+
+{% block extra_js %}
+  <script>
+    const SESSION_ID="{{ session.id }}",
+          CSRF_TOKEN="{{ csrf_token }}";
+  </script>
+  <script src="{% static 'services/video_generator/js/generator.js' %}"></script>
+{% endblock %}

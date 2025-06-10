@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Image Generator{% endblock %}
+
+{% block main_content %}
+  <h1>Image Generator</h1>
+  <div class="input-group">
+    <textarea id="prompt-input" placeholder="Enter image prompt…" required></textarea>
+    <button id="gen-btn"><i class="fa fa-image"></i></button>
+  </div>
+  <div id="images-grid">
+    {% for img in images %}
+      <div class="generated-image">
+        <img src="{{ img.image_url }}" alt="{{ img.prompt }}">
+        <p>{{ img.prompt }}</p>
+      </div>
+    {% endfor %}
+  </div>
+  <input type="hidden" id="session-id" value="{{ session.id }}">
+{% endblock %}
+
+{% block extra_js %}
+  <script>
+    const SESSION_ID="{{ session.id }}",
+          CSRF_TOKEN="{{ csrf_token }}";
+  </script>
+  <script src="{% static 'services/image_generator/js/generator.js' %}"></script>
+{% endblock %}

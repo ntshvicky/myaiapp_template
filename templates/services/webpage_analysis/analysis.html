@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Webpage Analysis{% endblock %}
+
+{% block main_content %}
+  <div class="chat-container">
+    {% if not messages %}
+      <div class="default-text">
+        <h1>Webpage Analysis</h1>
+        <p>Enter “URL::Your question” to start.</p>
+      </div>
+    {% endif %}
+    {% for msg in messages %}
+      {% if msg.sender=="user" %}
+        <div class="chat outgoing"><div class="chat-content"><div class="chat-details"><p>{{ msg.content }}</p></div></div></div>
+      {% else %}
+        <div class="chat incoming"><div class="chat-content"><div class="chat-details"><p>{{ msg.content }}</p></div></div></div>
+      {% endif %}
+    {% endfor %}
+  </div>
+
+  <div class="typing-container">
+    <div class="typing-content">
+      <div class="input-group">
+        <textarea id="chat-input" placeholder="Enter URL::question…" required></textarea>
+        <button id="send-btn"><i class="fa fa-paper-plane"></i></button>
+        <button id="delete-btn"><i class="fa fa-trash"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <input type="hidden" id="session-id" value="{{ session.id }}">
+{% endblock %}
+
+{% block extra_js %}
+  <script>
+    const SESSION_ID = "{{ session.id }}",
+          CSRF_TOKEN = "{{ csrf_token }}";
+  </script>
+  <script src="{% static 'services/webpage_analysis/js/analysis.js' %}"></script>
+{% endblock %}

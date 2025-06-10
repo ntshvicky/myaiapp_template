@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Chat With Images{% endblock %}
+{% block main_content %}
+  <h1>Chat With Images</h1>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %} 
+    {{ form.image }} <button type="submit">Upload</button>
+  </form>
+  <select id="img-select">
+    <option value="">Select image…</option>
+    {% for u in uploads %}<option value="{{ u.id }}">{{ u.image.name }}</option>{% endfor %}
+  </select>
+  <div class="chat-container"></div>
+  <div class="typing-container">
+    <textarea id="chat-input" placeholder="Ask about the image…"></textarea>
+    <button id="send-btn">Send</button>
+    <button id="delete-btn">Clear</button>
+  </div>
+  <script>
+    const AJAX_URL="{% url 'image_chat:ajax' %}", CSRF_TOKEN="{{ csrf_token }}";
+  </script>
+  <script src="{% static 'services/image_chat/js/chat.js' %}"></script>
+{% endblock %}

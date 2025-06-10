@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Compare Images{% endblock %}
+{% block main_content %}
+  <h1>Compare Two Images</h1>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Compare</button>
+  </form>
+
+  {% if result %}
+    <h2>Score: {{ result.score }}</h2>
+    <p>Diff:</p>
+    <img src="{{ result.diff_url }}" alt="Diff">
+  {% endif %}
+{% endblock %}

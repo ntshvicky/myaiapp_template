@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Chat Your Documents{% endblock %}
+{% block main_content %}
+  <h1>Chat Your Documents</h1>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ docs|length }} documents uploaded.
+    {{ form.file }} <button type="submit">Upload</button>
+  </form>
+
+  <select id="doc-select">
+    <option value="">Select doc…</option>
+    {% for doc in docs %}<option value="{{ doc.id }}">{{ doc.file.name }}</option>{% endfor %}
+  </select>
+
+  <div class="chat-container"></div>
+  <div class="typing-container">
+    <textarea id="chat-input" placeholder="Ask about the document…"></textarea>
+    <button id="send-btn">Send</button>
+    <button id="delete-btn">Clear</button>
+  </div>
+  <input type="hidden" id="session-id" value="">
+  <script>
+    const AJAX_URL="{% url 'document_chat:ajax' %}",
+          CSRF_TOKEN="{{ csrf_token }}";
+  </script>
+  <script src="{% static 'services/document_chat/js/chat.js' %}"></script>
+{% endblock %}

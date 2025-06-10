@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Music Generator{% endblock %}
+
+{% block main_content %}
+  <h1>Music Generator</h1>
+  <div class="input-group">
+    <textarea id="prompt-input" placeholder="Enter music prompt…" required></textarea>
+    <button id="gen-btn"><i class="fa fa-music"></i></button>
+  </div>
+  <div id="music-list">
+    {% for m in musics %}
+      <div class="generated-music">
+        <audio controls src="{{ m.music_url }}"></audio>
+        <p>{{ m.prompt }}</p>
+      </div>
+    {% endfor %}
+  </div>
+  <input type="hidden" id="session-id" value="{{ session.id }}">
+{% endblock %}
+
+{% block extra_js %}
+  <script>
+    const SESSION_ID="{{ session.id }}",
+          CSRF_TOKEN="{{ csrf_token }}";
+  </script>
+  <script src="{% static 'services/music_generator/js/generator.js' %}"></script>
+{% endblock %}

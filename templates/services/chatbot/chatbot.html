@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}AI Chatbot{% endblock %}
+
+{% block extra_css %}
+<!-- If you have any page-specific CSS, link it here -->
+{% endblock %}
+
+{% block main_content %}
+  <div class="chat-container">
+    {% if not messages %}
+      <div class="default-text">
+        <h1>AI Chatbot</h1>
+        <p>Start a conversation below.</p>
+      </div>
+    {% endif %}
+    {% for msg in messages %}
+      {% if msg.sender == "user" %}
+        <div class="chat outgoing">
+          <div class="chat-content">
+            <div class="chat-details">
+              <p>{{ msg.content }}</p>
+            </div>
+          </div>
+        </div>
+      {% else %}
+        <div class="chat incoming">
+          <div class="chat-content">
+            <div class="chat-details">
+              <p>{{ msg.content }}</p>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+
+  <div class="typing-container">
+    <div class="typing-content">
+      <div class="input-group">
+        <textarea id="chat-input" placeholder="Type your message…" required></textarea>
+        <button id="send-btn"><i class="fa fa-paper-plane"></i></button>
+        <button id="delete-btn"><i class="fa fa-trash"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <input type="hidden" id="session-id" value="{{ session.id }}">
+{% endblock %}
+
+{% block extra_js %}
+  <script>
+    const SESSION_ID = document.getElementById("session-id").value;
+    const CSRF_TOKEN = "{{ csrf_token }}";
+  </script>
+  <script src="{% static 'services/chatbot/js/chatbot.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Content Writer{% endblock %}
+{% block main_content %}
+  <h1>Content Writer</h1>
+  <textarea id="prompt-input" placeholder="Enter your brief…"></textarea>
+  <button id="gen-btn">Generate</button>
+  <div id="result"></div>
+  <script>
+    const AJAX_URL="{% url 'content_writer:write' %}",
+          CSRF_TOKEN="{{ csrf_token }}";
+  </script>
+  <script src="{% static 'services/content_writer/js/write.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,26 @@
+# Django & Database
+Django>=4.2,<5.0
+mysqlclient>=2.1
+
+# REST & CORS (for AJAX/API endpoints)
+djangorestframework>=3.13
+django-cors-headers>=3.13
+
+# Environment config
+python-dotenv>=0.21.0
+
+# AI / LangChain stack
+openai>=0.27.0
+langchain>=0.0.362
+
+# Document loaders & Vector DB
+unstructured>=0.7.0
+chromadb>=0.3.20
+
+# Image handling (for uploads)
+pillow>=9.0.0
+
+# Production WSGI server (optional)
+gunicorn>=20.1.0
+
+PyMysql

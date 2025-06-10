@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Resume Analysis{% endblock %}
+{% block main_content %}
+  <h1>Resume Analysis</h1>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ jds|length }} JDs, {{ cvs|length }} CVs uploaded.<br>
+    JD: {{ jd_form.file }} <button name="upload_jd">Upload JD</button><br>
+    CV: {{ cv_form.file }} <button name="upload_cv">Upload CV</button><br>
+  </form>
+
+  <select id="jd-select"><option value="">Select JD…</option>
+    {% for jd in jds %}<option value="{{ jd.id }}">{{ jd.file.name }}</option>{% endfor %}
+  </select>
+  <select id="cv-select" multiple>
+    {% for cv in cvs %}<option value="{{ cv.id }}">{{ cv.file.name }}</option>{% endfor %}
+  </select>
+  <button id="compare-btn">Analyze</button>
+  <div id="results"></div>
+
+  <script>
+    const AJAX_URL="{% url 'resume_analysis:analysis' %}", CSRF_TOKEN="{{ csrf_token }}";
+  </script>
+  <script src="{% static 'services/resume_analysis/js/analysis.js' %}"></script>
+{% endblock %}

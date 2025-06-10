@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Email Manager{% endblock %}
+{% block main_content %}
+  <h1>Email Manager</h1>
+  <select id="acct-select">
+    <option value="">Select account…</option>
+    {% for a in accounts %}<option value="{{ a.id }}">{{ a.address }}</option>{% endfor %}
+  </select>
+  <input id="search-input" placeholder="Search inbox…">
+  <button id="search-btn">Search</button>
+  <ul id="results"></ul>
+
+  <h2>Compose</h2>
+  <input id="to" placeholder="To">
+  <input id="subject" placeholder="Subject">
+  <textarea id="body" placeholder="Body"></textarea>
+  <button id="send-btn">Send</button>
+
+  <script>
+    const AJAX_URL="{% url 'email_manager:inbox' %}",
+          CSRF_TOKEN="{{ csrf_token }}";
+  </script>
+  <script src="{% static 'services/email_manager/js/inbox.js' %}"></script>
+{% endblock %}
