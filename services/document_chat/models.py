@@ -8,6 +8,7 @@ class Document(models.Model):
 
 class DocChatSession(models.Model):
     document = models.ForeignKey(Document, on_delete=models.CASCADE)
+    pages = models.CharField(max_length=50, default="all", help_text="Pages to analyze, e.g., '1-3', '5', or 'all'")
     created_at = models.DateTimeField(auto_now_add=True)
 
 class DocChatMessage(models.Model):

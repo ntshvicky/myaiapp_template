@@ -1,11 +1,12 @@
 from django.shortcuts import render
 from django.views import View
 from django.http import JsonResponse
-from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import MusicSession, MusicMessage
 from .services import MusicGeneratorService
+from services.access import FeatureAccessMixin
 
-class MusicGeneratorView(LoginRequiredMixin, View):
+class MusicGeneratorView(FeatureAccessMixin, View):
+    feature_key = "music_generator"
     template_name="services/music_generator/generator.html"
 
     def get(self, request):

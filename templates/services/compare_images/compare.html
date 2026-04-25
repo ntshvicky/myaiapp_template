@@ -12,7 +12,10 @@
 
   {% if result %}
     <h2>Score: {{ result.score }}</h2>
+    <p>{{ result.score|floatformat:2 }} similarity, where 1.00 means visually identical after normalization.</p>
+    {% if result.diff_url %}
     <p>Diff:</p>
     <img src="{{ result.diff_url }}" alt="Diff">
+    {% endif %}
   {% endif %}
 {% endblock %}

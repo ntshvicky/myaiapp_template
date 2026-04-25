@@ -4,11 +4,74 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{% block title %}MyAIApp{% endblock %}</title>
+    <title>{% block title %}MyAIApp Platform{% endblock %}</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Global CSS -->
     <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js" defer></script>
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
-    {% block content %}{% endblock %}
+    <!-- Abstract Background -->
+    <div class="bg-shape shape-1"></div>
+    <div class="bg-shape shape-2"></div>
+    <div class="bg-shape shape-3"></div>
+
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar glass-panel">
+            <div class="logo">
+                <i class="fa fa-layer-group"></i> MyAIApp
+            </div>
+            <nav class="nav-links">
+                <a href="{% url 'dashboard' %}"><i class="fa fa-home"></i> Dashboard</a>
+                <a href="{% url 'pricing' %}"><i class="fa fa-star"></i> Pricing Plans</a>
+                {% if user.is_authenticated %}
+                <a href="{% url 'accounts:history' %}"><i class="fa fa-clock-rotate-left"></i> History</a>
+                <a href="{% url 'accounts:settings' %}"><i class="fa fa-gear"></i> Settings</a>
+                {% endif %}
+                <a href="{% url 'chatbot:chatbot' %}"><i class="fa fa-comments"></i> Chatbot</a>
+                <a href="{% url 'image_chat:chat' %}"><i class="fa fa-image"></i> Image Chat</a>
+                <a href="{% url 'document_chat:chat' %}"><i class="fa fa-file-text"></i> Document Chat</a>
+                <a href="{% url 'webpage_analysis:analysis' %}"><i class="fa fa-globe"></i> Website Analyzer</a>
+                <a href="{% url 'image_generator:generator' %}"><i class="fa fa-paint-brush"></i> Image Generator</a>
+                <a href="{% url 'resume_analysis:analysis' %}"><i class="fa fa-briefcase"></i> Resume Analyzer</a>
+            </nav>
+            <div class="user-profile">
+                {% if user.is_authenticated %}
+                    <span>{{ user.username }}</span>
+                    <form method="post" action="{% url 'accounts:logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="logout-btn"><i class="fa fa-sign-out"></i></button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'accounts:login' %}" class="login-btn"><i class="fa fa-sign-in"></i> Login</a>
+                {% endif %}
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            {% if messages %}
+                <div class="flash-stack">
+                    {% for message in messages %}
+                        <div class="flash-message {{ message.tags }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            <!-- This allows pages to use 'content' OR 'main_content' -->
+            {% block content %}
+            {% block main_content %}{% endblock %}
+            {% endblock %}
+        </main>
+    </div>
+
     <script src="{% static 'js/common.js' %}"></script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

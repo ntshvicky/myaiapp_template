@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Subscription Plans | MyAIApp{% endblock %}
+
+{% block content %}
+<div style="text-align: center; margin-bottom: 2rem;">
+    <h1>Choose Your AI Plan</h1>
+    <p style="color: var(--text-secondary); font-size: 1.1rem;">Unlock powerful AI tools to supercharge your workflow.</p>
+</div>
+
+<div class="pricing-grid">
+    <!-- Free Plan -->
+    <div class="glass-card pricing-card">
+        <h3>Free</h3>
+        <div class="price">$0<span>/mo</span></div>
+        <ul>
+            <li><i class="fa fa-check"></i> Basic Chatbot Access</li>
+            <li><i class="fa fa-check"></i> 5 Image Chats/mo</li>
+            <li><i class="fa fa-check"></i> Community Support</li>
+            <li><i class="fa fa-times" style="color: #ef4444;"></i> Document Analysis</li>
+            <li><i class="fa fa-times" style="color: #ef4444;"></i> Code Generation</li>
+        </ul>
+        <form method="post">{% csrf_token %}<input type="hidden" name="plan" value="free"><button class="btn-subscribe" type="submit">Get Started</button></form>
+    </div>
+
+    <!-- Plus Plan -->
+    <div class="glass-card pricing-card" style="border-color: var(--accent); transform: scale(1.05);">
+        <div style="background: var(--accent); color: white; padding: 0.25rem; font-size: 0.8rem; border-radius: 0.5rem; margin-bottom: 1rem; display: inline-block;">RECOMMENDED</div>
+        <h3>Plus</h3>
+        <div class="price">$15<span>/mo</span></div>
+        <ul>
+            <li><i class="fa fa-check"></i> Advanced Gemini Models</li>
+            <li><i class="fa fa-check"></i> 100 Image Chats/mo</li>
+            <li><i class="fa fa-check"></i> Document Chat (Max 3 files)</li>
+            <li><i class="fa fa-check"></i> Website Analyzer</li>
+            <li><i class="fa fa-times" style="color: #ef4444;"></i> Email Manager</li>
+        </ul>
+        <form method="post">{% csrf_token %}<input type="hidden" name="plan" value="plus"><button class="btn-subscribe" type="submit">Subscribe Plus</button></form>
+    </div>
+
+    <!-- Pro Plan -->
+    <div class="glass-card pricing-card">
+        <h3>Pro</h3>
+        <div class="price">$29<span>/mo</span></div>
+        <ul>
+            <li><i class="fa fa-check"></i> Everything in Plus</li>
+            <li><i class="fa fa-check"></i> Unlimited Image Chats</li>
+            <li><i class="fa fa-check"></i> Resume & CV Generation</li>
+            <li><i class="fa fa-check"></i> Email Manager & Inbox AI</li>
+            <li><i class="fa fa-check"></i> Compare 2 Images</li>
+        </ul>
+        <form method="post">{% csrf_token %}<input type="hidden" name="plan" value="pro"><button class="btn-subscribe" type="submit">Subscribe Pro</button></form>
+    </div>
+    
+    <!-- Enterprise Plan -->
+    <div class="glass-card pricing-card">
+        <h3>Enterprise</h3>
+        <div class="price">Custom</div>
+        <ul>
+            <li><i class="fa fa-check"></i> Unlimited Everything</li>
+            <li><i class="fa fa-check"></i> Dedicated Account Manager</li>
+            <li><i class="fa fa-check"></i> Custom AI Model Fine-tuning</li>
+            <li><i class="fa fa-check"></i> SLA Uptime Guarantee</li>
+            <li><i class="fa fa-check"></i> Premium 24/7 Support</li>
+        </ul>
+        <form method="post">{% csrf_token %}<input type="hidden" name="plan" value="enterprise"><button class="btn-subscribe" type="submit">Contact Sales</button></form>
+    </div>
+</div>
+{% endblock %}

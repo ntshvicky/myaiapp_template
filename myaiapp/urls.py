@@ -1,9 +1,12 @@
 from django.contrib import admin
 from django.urls import path, include
+from myaiapp.views import DashboardView, PricingView
 from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
+    path('', DashboardView.as_view(), name='dashboard'),
+    path('pricing/', PricingView.as_view(), name='pricing'),
     path('admin/', admin.site.urls),
     path('accounts/', include('accounts.urls')),
     path('chatbot/', include('services.chatbot.urls')),

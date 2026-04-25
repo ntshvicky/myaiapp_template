@@ -1,10 +1,12 @@
 from django.shortcuts import render
 from django.views import View
 from django.http import JsonResponse
-from django.contrib.auth.mixins import LoginRequiredMixin
 from .services import ContentWriterService
+from services.access import FeatureAccessMixin
+from services.ai_router import record_token_usage
 
-class WriterView(LoginRequiredMixin, View):
+class WriterView(FeatureAccessMixin, View):
+    feature_key = "content_writer"
     template_name="services/content_writer/write.html"
 
     def get(self,request):
@@ -14,5 +16,9 @@ class WriterView(LoginRequiredMixin, View):
         prompt=request.POST.get("prompt","").strip()
         if not prompt:
             return JsonResponse({"error":"No prompt."},status=400)
-        reply=ContentWriterService().write(prompt)
+        try:
+            reply=ContentWriterService().write(prompt)
+        except Exception as exc:
+            reply=f"Unable to generate content: {exc}"
+        record_token_usage(request.user, "content_writer", "", prompt, reply)
         return JsonResponse({"content":reply})

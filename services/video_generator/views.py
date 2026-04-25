@@ -1,11 +1,12 @@
 from django.shortcuts import render
 from django.views import View
 from django.http import JsonResponse
-from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import VideoSession, VideoMessage
 from .services import VideoGeneratorService
+from services.access import FeatureAccessMixin
 
-class VideoGeneratorView(LoginRequiredMixin, View):
+class VideoGeneratorView(FeatureAccessMixin, View):
+    feature_key = "video_generator"
     template_name = "services/video_generator/generator.html"
 
     def get(self, request):

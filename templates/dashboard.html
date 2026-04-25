@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | MyAIApp{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>Welcome to MyAIApp Platform</h1>
+    <p>Select an AI service from the options below to get started with next-generation tools.</p>
+</div>
+
+<div class="services-grid">
+    <!-- Chatbot -->
+    <a href="{% url 'chatbot:chatbot' %}" class="glass-card service-card">
+        <div class="card-icon"><i class="fa fa-comments"></i></div>
+        <h3>AI Chatbot</h3>
+        <p>Engage in smart conversations and get instant answers with Gemini.</p>
+    </a>
+
+    <!-- Image Chat -->
+    <a href="{% url 'image_chat:chat' %}" class="glass-card service-card">
+        <div class="card-icon"><i class="fa fa-image"></i></div>
+        <h3>Image Chat</h3>
+        <p>Upload images and analyze them seamlessly using Multimodal AI.</p>
+    </a>
+
+    <!-- Document Chat -->
+    <a href="{% url 'document_chat:chat' %}" class="glass-card service-card">
+        <div class="card-icon"><i class="fa fa-file-text"></i></div>
+        <h3>Document Chat</h3>
+        <p>Chat with your PDFs and extract meaningful insights.</p>
+    </a>
+
+    <!-- Image Generator -->
+    <a href="{% url 'image_generator:generator' %}" class="glass-card service-card">
+        <div class="card-icon"><i class="fa fa-paint-brush"></i></div>
+        <h3>Image Generator</h3>
+        <p>Create stunning visuals from simple text prompts.</p>
+    </a>
+
+    <!-- Content Writer -->
+    <a href="{% url 'content_writer:write' %}" class="glass-card service-card">
+        <div class="card-icon"><i class="fa fa-pencil"></i></div>
+        <h3>Content Writer</h3>
+        <p>Generate high-quality blog posts, essays, and articles.</p>
+    </a>
+
+    <!-- Resume Analysis -->
+    <a href="{% url 'resume_analysis:analysis' %}" class="glass-card service-card">
+        <div class="card-icon"><i class="fa fa-briefcase"></i></div>
+        <h3>Resume Analyzer</h3>
+        <p>Analyze and optimize your resume for applicant tracking systems.</p>
+    </a>
+    <a href="{% url 'webpage_analysis:analysis' %}" class="glass-card service-card">
+        <div class="card-icon"><i class="fa fa-globe"></i></div>
+        <h3>Website Analyzer</h3>
+        <p>Retrieve page content and ask AI questions about a website.</p>
+    </a>
+    <a href="{% url 'email_manager:inbox' %}" class="glass-card service-card">
+        <div class="card-icon"><i class="fa fa-envelope"></i></div>
+        <h3>Email Manager</h3>
+        <p>Search stored inbox data and prepare for provider connections.</p>
+    </a>
+    <a href="{% url 'compare_images:compare' %}" class="glass-card service-card">
+        <div class="card-icon"><i class="fa fa-object-group"></i></div>
+        <h3>Compare Images</h3>
+        <p>Upload two images and calculate visual similarity.</p>
+    </a>
+</div>
+{% endblock %}

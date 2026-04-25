@@ -8,14 +8,63 @@
 {% endblock %}
 
 {% block main_content %}
+  <div class="chat-shell">
+    <aside class="conversation-panel">
+      <a class="btn-subscribe" href="{% url 'chatbot:chatbot' %}?new=1"><i class="fa fa-plus"></i> New Chat</a>
+      <div class="conversation-list">
+        {% for item in sessions %}
+          <a class="conversation-link {% if item.id == session.id %}active{% endif %}" href="{% url 'chatbot:chatbot' %}?session_id={{ item.id }}">
+            <span>{{ item.title }}</span>
+            <small>{{ item.provider }} · {{ item.model_name }}</small>
+          </a>
+        {% empty %}
+          <p class="muted">No conversations yet.</p>
+        {% endfor %}
+      </div>
+    </aside>
+
+    <section class="chat-main">
+      <div class="chat-toolbar">
+        <div>
+          <h1>{{ session.title }}</h1>
+          <p>{{ token_totals.total_tokens|default:0 }} total tokens in this conversation</p>
+        </div>
+        <div class="model-controls">
+          <select id="provider-select">
+            {% for value, label in provider_choices %}
+              <option value="{{ value }}" {% if session.provider == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+          <input id="model-name" value="{{ session.model_name }}" placeholder="Model name">
+        </div>
+      </div>
+
   <div class="chat-container">
-    {% if not messages %}
+    {% if not chat_messages %}
       <div class="default-text">
         <h1>AI Chatbot</h1>
-        <p>Start a conversation below.</p>
+        <p>Start with a prompt or choose a suggestion.</p>
+        <div class="suggestion-grid" aria-label="Suggested prompts">
+          <button type="button" class="suggestion-chip" data-prompt="Explain artificial intelligence vs human intelligence with a concise table and a simple diagram.">
+            <i class="fa fa-diagram-project"></i>
+            <span>Explain with diagram</span>
+          </button>
+          <button type="button" class="suggestion-chip" data-prompt="Research this topic deeply and give me key points, risks, examples, and next steps.">
+            <i class="fa fa-magnifying-glass-chart"></i>
+            <span>Research a topic</span>
+          </button>
+          <button type="button" class="suggestion-chip" data-prompt="Turn these notes into a professional summary with headings, bullets, and action items.">
+            <i class="fa fa-list-check"></i>
+            <span>Summarize notes</span>
+          </button>
+          <button type="button" class="suggestion-chip" data-prompt="Create a clear comparison table for two options, then recommend the best choice.">
+            <i class="fa fa-table-columns"></i>
+            <span>Compare options</span>
+          </button>
+        </div>
       </div>
     {% endif %}
-    {% for msg in messages %}
+    {% for msg in chat_messages %}
       {% if msg.sender == "user" %}
         <div class="chat outgoing">
           <div class="chat-content">
@@ -27,8 +76,8 @@
       {% else %}
         <div class="chat incoming">
           <div class="chat-content">
-            <div class="chat-details">
-              <p>{{ msg.content }}</p>
+            <div class="chat-details ai-markdown">
+              <div class="markdown-source">{{ msg.content|linebreaksbr }}</div>
             </div>
           </div>
         </div>
@@ -47,6 +96,8 @@
   </div>
 
   <input type="hidden" id="session-id" value="{{ session.id }}">
+    </section>
+  </div>
 {% endblock %}
 
 {% block extra_js %}
@@ -54,5 +105,5 @@
     const SESSION_ID = document.getElementById("session-id").value;
     const CSRF_TOKEN = "{{ csrf_token }}";
   </script>
-  <script src="{% static 'services/chatbot/js/chatbot.js' %}"></script>
+  <script src="{% static 'services/chatbot/js/chatbot.js' %}?v=20260426-6"></script>
 {% endblock %}
