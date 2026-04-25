@@ -1,30 +1,104 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Chat Your Documents{% endblock %}
+{% block title %}Document Chat | MyAIApp{% endblock %}
+
 {% block main_content %}
-  <h1>Chat Your Documents</h1>
-  <form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ docs|length }} documents uploaded.
-    {{ form.file }} <button type="submit">Upload</button>
-  </form>
+<div class="dashboard-header" style="margin-bottom: 2rem;">
+    <h1>Chat with your Documents</h1>
+    <p>Upload a PDF and ask Gemini questions about specific pages or the whole document.</p>
+</div>
 
-  <select id="doc-select">
-    <option value="">Select doc…</option>
-    {% for doc in docs %}<option value="{{ doc.id }}">{{ doc.file.name }}</option>{% endfor %}
-  </select>
+<div style="display: flex; gap: 2rem;">
+    <!-- Document Sidebar -->
+    <div class="glass-card" style="width: 300px; height: calc(100vh - 200px); overflow-y: auto;">
+        <h3 style="margin-bottom: 1rem;">Your Documents <span style="font-size: 0.9rem; color: var(--text-secondary);">({{ docs|length }}/3)</span></h3>
+        
+        <!-- Upload Form -->
+        <form method="post" enctype="multipart/form-data" style="margin-bottom: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="upload">
+            <input type="file" name="file" required style="font-size: 0.8rem;">
+            <button type="submit" class="btn-subscribe" style="padding: 0.5rem; font-size: 0.9rem;">Upload PDF</button>
+        </form>
 
-  <div class="chat-container"></div>
-  <div class="typing-container">
-    <textarea id="chat-input" placeholder="Ask about the document…"></textarea>
-    <button id="send-btn">Send</button>
-    <button id="delete-btn">Clear</button>
-  </div>
-  <input type="hidden" id="session-id" value="">
-  <script>
-    const AJAX_URL="{% url 'document_chat:ajax' %}",
-          CSRF_TOKEN="{{ csrf_token }}";
-  </script>
-  <script src="{% static 'services/document_chat/js/chat.js' %}"></script>
+        {% if messages %}
+            {% for message in messages %}
+                <div style="padding: 0.5rem; background: rgba(239, 68, 68, 0.2); color: #ef4444; border-radius: 0.5rem; margin-bottom: 1rem; font-size: 0.9rem;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <hr style="border: 0; height: 1px; background: var(--glass-border); margin-bottom: 1rem;">
+
+        <!-- List of Documents -->
+        {% for doc in docs %}
+            <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid {% if doc.id == doc_id %}var(--accent){% else %}var(--glass-border){% endif %}; padding: 1rem; border-radius: 0.75rem; margin-bottom: 1rem;">
+                <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem; word-break: break-all;">{{ doc.file.name|slice:"10:" }}</div>
+                
+                <form method="get" action="{% url 'document_chat:chat' %}" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <input type="hidden" name="doc_id" value="{{ doc.id }}">
+                    <input type="text" name="pages" value="{% if doc.id == doc_id %}{{ selected_pages }}{% else %}all{% endif %}" placeholder="Pages (e.g. 1-3, 5)" style="background: var(--bg-primary); border: 1px solid var(--glass-border); color: #fff; padding: 0.4rem; border-radius: 0.25rem; font-size: 0.8rem; width: 100%;">
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button type="submit" style="background: var(--accent); color: white; border: none; padding: 0.4rem; border-radius: 0.25rem; cursor: pointer; flex: 1; font-size: 0.8rem;">Select</button>
+                    </div>
+                </form>
+                
+                <form method="post" action="{% url 'document_chat:chat' %}" style="margin-top: 0.5rem;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="doc_id" value="{{ doc.id }}">
+                    <button type="submit" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: none; padding: 0.4rem; border-radius: 0.25rem; cursor: pointer; width: 100%; font-size: 0.8rem;">Delete</button>
+                </form>
+            </div>
+        {% empty %}
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">No documents uploaded yet.</p>
+        {% endfor %}
+    </div>
+
+    <!-- Chat Area -->
+    <div style="flex: 1;">
+        {% if session %}
+            <div class="chat-container" id="chat-container">
+                {% if not session.messages.all %}
+                <div class="default-text" style="text-align: center; margin-top: auto; margin-bottom: auto; color: var(--text-secondary);">
+                    <h2>Document Loaded</h2>
+                    <p>Pages Selected: <strong>{{ selected_pages }}</strong></p>
+                    <p>Ask anything about this document below.</p>
+                </div>
+                {% endif %}
+                
+                {% for msg in session.messages.all %}
+                    <div class="chat {% if msg.sender == 'user' %}outgoing{% else %}incoming{% endif %}">
+                        <div class="chat-content">
+                            <p>{{ msg.content|linebreaksbr }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="typing-container">
+                <div class="input-group">
+                    <textarea id="chat-input" placeholder="Ask about the document…"></textarea>
+                    <button id="send-btn"><i class="fa fa-paper-plane"></i></button>
+                    <button id="delete-btn"><i class="fa fa-trash"></i></button>
+                </div>
+            </div>
+
+            <input type="hidden" id="session-id" value="{{ session.id }}">
+        {% else %}
+            <div class="chat-container" style="justify-content: center; align-items: center; color: var(--text-secondary);">
+                <h3>Select a document from the left to start chatting.</h3>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    const SESSION_ID = document.getElementById("session-id") ? document.getElementById("session-id").value : "";
+    const AJAX_URL = "{% url 'document_chat:ajax' %}";
+    const CSRF_TOKEN = "{{ csrf_token }}";
+</script>
+<script src="{% static 'services/document_chat/js/chat.js' %}"></script>
 {% endblock %}

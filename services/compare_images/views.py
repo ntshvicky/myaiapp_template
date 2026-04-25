@@ -1,12 +1,13 @@
 from django.shortcuts import render, redirect
 from django.views import View
 from django.http import JsonResponse
-from django.contrib.auth.mixins import LoginRequiredMixin
 from .services import ImageCompareService
 from .models import CompareSession, ComparisonResult
 from .forms import CompareForm
+from services.access import FeatureAccessMixin
 
-class CompareView(LoginRequiredMixin, View):
+class CompareView(FeatureAccessMixin, View):
+    feature_key = "compare_images"
     template_name="services/compare_images/compare.html"
 
     def get(self,request):

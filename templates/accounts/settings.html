@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}Settings | MyAIApp{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>Profile & AI Settings</h1>
+    <p>Manage your profile, subscription, model preferences, API keys, and token usage.</p>
+</div>
+
+<div class="settings-grid">
+    <section class="settings-card">
+        <div class="settings-card-header">
+            <div>
+                <h2>Profile</h2>
+                <p class="muted">Plan: <strong>{{ user.subscription_plan|title }}</strong> · {% if user.subscription_active %}Active{% else %}Inactive{% endif %}</p>
+            </div>
+        </div>
+
+        <form method="post" class="settings-form">
+            {% csrf_token %}
+            <div class="form-section">
+                <h3>Account Details</h3>
+                <div class="form-grid two-col">
+                    <label>Username{{ profile_form.username }}</label>
+                    <label>Email{{ profile_form.email }}</label>
+                    <label>Default Provider{{ profile_form.preferred_ai_provider }}</label>
+                    <label>Default Model{{ profile_form.preferred_model }}</label>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="section-title-row">
+                    <div>
+                        <h3>Provider API Keys</h3>
+                        <p class="muted">Leave a key blank to keep the existing saved value.</p>
+                    </div>
+                </div>
+
+                <div class="provider-settings">
+                    <div class="provider-box">
+                        <h4>Google Gemini</h4>
+                        <label>API Key{{ credential_form.gemini_api_key }}</label>
+                        <label>Model{{ credential_form.gemini_model }}</label>
+                    </div>
+                    <div class="provider-box">
+                        <h4>OpenAI</h4>
+                        <label>API Key{{ credential_form.openai_api_key }}</label>
+                        <label>Model{{ credential_form.openai_model }}</label>
+                    </div>
+                    <div class="provider-box">
+                        <h4>Anthropic Claude</h4>
+                        <label>API Key{{ credential_form.anthropic_api_key }}</label>
+                        <label>Model{{ credential_form.anthropic_model }}</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-actions">
+                <button type="submit"><i class="fa fa-save"></i> Save Settings</button>
+            </div>
+        </form>
+    </section>
+
+    <section class="settings-card">
+        <h2>Configured Providers</h2>
+        <div class="usage-list">
+            {% for item in credential_status %}
+                <div class="usage-row">
+                    <div>
+                        <strong>{{ item.label }}</strong>
+                        <p>{{ item.masked_key }}</p>
+                    </div>
+                    <span>{{ item.model|default:"Default model" }}</span>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="settings-card">
+        <h2>Token Usage</h2>
+        <div class="usage-total">{{ token_totals.total_tokens|default:0 }}</div>
+        <p class="muted">{{ token_totals.input_tokens|default:0 }} input · {{ token_totals.output_tokens|default:0 }} output</p>
+        <div class="usage-list">
+            {% for row in by_conversation %}
+                <div class="usage-row">
+                    <div>
+                        <strong>{{ row.module }} #{{ row.conversation_id }}</strong>
+                        <p>{{ row.provider }} · {{ row.model_name }}</p>
+                    </div>
+                    <span>{{ row.total_tokens }} tokens</span>
+                </div>
+            {% empty %}
+                <p class="muted">No token usage recorded yet.</p>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+{% endblock %}

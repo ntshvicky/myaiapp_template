@@ -1,11 +1,12 @@
 from django.shortcuts import render
 from django.views import View
 from django.http import JsonResponse
-from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import ImageSession, ImageMessage
 from .services import ImageGeneratorService
+from services.access import FeatureAccessMixin
 
-class ImageGeneratorView(LoginRequiredMixin, View):
+class ImageGeneratorView(FeatureAccessMixin, View):
+    feature_key = "image_generator"
     template_name = "services/image_generator/generator.html"
 
     def get(self, request):

@@ -30,6 +30,6 @@ document.addEventListener("DOMContentLoaded",()=>{
       body:new URLSearchParams({action:"send",account_id:acct.value,to:toIn.value,subject:subjIn.value,body:bodyIn.value})
     })
     .then(r=>r.json())
-    .then(d=>alert(d.sent?"Sent":"Failed"));
+    .then(d=>alert(d.sent?"Sent":"Email sending is not connected yet. Add Gmail/Outlook OAuth + SMTP provider settings."));
   };
 });

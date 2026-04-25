@@ -1,11 +1,13 @@
 from django.shortcuts import render
 from django.views import View
 from django.http import JsonResponse
-from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import AnalysisSession, AnalysisMessage
 from .services import WebpageAnalysisService
+from services.access import FeatureAccessMixin
+from services.ai_router import record_token_usage
 
-class AnalysisView(LoginRequiredMixin, View):
+class AnalysisView(FeatureAccessMixin, View):
+    feature_key = "webpage_analysis"
     template_name = "services/webpage_analysis/analysis.html"
 
     def get(self, request):
@@ -31,6 +33,10 @@ class AnalysisView(LoginRequiredMixin, View):
 
         AnalysisMessage.objects.create(session=session, sender="user", content=user_input)
         bot = WebpageAnalysisService()
-        reply = bot.send_message(session, user_input)
+        try:
+            reply = bot.send_message(session, user_input)
+        except Exception as exc:
+            reply = f"Unable to analyze webpage: {exc}"
+        record_token_usage(request.user, "webpage_analysis", session.id, user_input, reply)
         AnalysisMessage.objects.create(session=session, sender="bot", content=reply)
         return JsonResponse({"bot_response": reply})

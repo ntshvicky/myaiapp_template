@@ -1,11 +1,12 @@
 from django.shortcuts import render
 from django.views import View
 from django.http import JsonResponse
-from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import EmailAccount
 from .services import EmailService
+from services.access import FeatureAccessMixin
 
-class EmailManagerView(LoginRequiredMixin,View):
+class EmailManagerView(FeatureAccessMixin,View):
+    feature_key = "email_manager"
     template_name="services/email_manager/inbox.html"
 
     def get(self,request):

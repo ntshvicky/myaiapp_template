@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Conversation History | MyAIApp{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>Conversation History</h1>
+    <p>Resume previous chats across your AI tools.</p>
+</div>
+
+<div class="history-list">
+    {% for item in conversations %}
+        <a class="history-row" href="{{ item.url }}">
+            <div>
+                <strong>{{ item.title }}</strong>
+                <p>{{ item.module }} · {{ item.message_count }} messages · {{ item.tokens }} tokens</p>
+            </div>
+            <span>{{ item.updated_at|date:"M d, Y H:i" }}</span>
+        </a>
+    {% empty %}
+        <div class="glass-card">
+            <p class="muted">No conversations yet. Start with the chatbot or upload a document/image.</p>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

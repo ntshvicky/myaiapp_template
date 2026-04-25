@@ -12,7 +12,7 @@
       </div>
     {% endif %}
     {% for msg in messages %}
-      {% if msg.sender=="user" %}
+      {% if msg.sender == "user" %}
         <div class="chat outgoing"><div class="chat-content"><div class="chat-details"><p>{{ msg.content }}</p></div></div></div>
       {% else %}
         <div class="chat incoming"><div class="chat-content"><div class="chat-details"><p>{{ msg.content }}</p></div></div></div>

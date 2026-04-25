@@ -8,6 +8,37 @@
 {% endblock %}
 
 {% block main_content %}
+  <div class="chat-shell">
+    <aside class="conversation-panel">
+      <a class="btn-subscribe" href="{% url 'chatbot:chatbot' %}?new=1"><i class="fa fa-plus"></i> New Chat</a>
+      <div class="conversation-list">
+        {% for item in sessions %}
+          <a class="conversation-link {% if item.id == session.id %}active{% endif %}" href="{% url 'chatbot:chatbot' %}?session_id={{ item.id }}">
+            <span>{{ item.title }}</span>
+            <small>{{ item.provider }} · {{ item.model_name }}</small>
+          </a>
+        {% empty %}
+          <p class="muted">No conversations yet.</p>
+        {% endfor %}
+      </div>
+    </aside>
+
+    <section class="chat-main">
+      <div class="chat-toolbar">
+        <div>
+          <h1>{{ session.title }}</h1>
+          <p>{{ token_totals.total_tokens|default:0 }} total tokens in this conversation</p>
+        </div>
+        <div class="model-controls">
+          <select id="provider-select">
+            {% for value, label in provider_choices %}
+              <option value="{{ value }}" {% if session.provider == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+          <input id="model-name" value="{{ session.model_name }}" placeholder="Model name">
+        </div>
+      </div>
+
   <div class="chat-container">
     {% if not messages %}
       <div class="default-text">
@@ -27,8 +58,8 @@
       {% else %}
         <div class="chat incoming">
           <div class="chat-content">
-            <div class="chat-details">
-              <p>{{ msg.content }}</p>
+            <div class="chat-details ai-markdown">
+              {{ msg.content|linebreaksbr }}
             </div>
           </div>
         </div>
@@ -47,6 +78,8 @@
   </div>
 
   <input type="hidden" id="session-id" value="{{ session.id }}">
+    </section>
+  </div>
 {% endblock %}
 
 {% block extra_js %}
