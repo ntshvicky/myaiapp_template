@@ -39,23 +39,46 @@ document.addEventListener("DOMContentLoaded", () => {
     return div;
   };
 
-  // ─── URL status indicator ───
-  const setUrlStatus = (msg, ok) => {
-    if (!urlStatus) return;
-    urlStatus.textContent = msg;
-    urlStatus.style.color = ok ? "#4ade80" : "#f87171";
+  const urlBar = urlInput?.closest(".url-bar-row");
+
+  // ─── Visual state helpers ───
+  const setLoaded = () => {
+    urlBar?.classList.add("loaded");
+    urlBar?.classList.remove("url-error");
+    if (urlStatus) { urlStatus.textContent = "✓ Page loaded — ask your question below"; urlStatus.style.color = "#4ade80"; }
+    if (loadBtn)   { loadBtn.innerHTML = `<i class="fa fa-check"></i> Loaded`; loadBtn.style.background = "#16a34a"; }
+  };
+  const setLoading = () => {
+    urlBar?.classList.remove("loaded", "url-error");
+    if (urlStatus) { urlStatus.textContent = "Fetching page…"; urlStatus.style.color = "var(--text-secondary)"; }
+    if (loadBtn)   { loadBtn.disabled = true; loadBtn.innerHTML = `<i class="fa fa-circle-notch fa-spin"></i> Loading…`; loadBtn.style.background = ""; }
+  };
+  const setError = (msg) => {
+    urlBar?.classList.add("url-error");
+    urlBar?.classList.remove("loaded");
+    if (urlStatus) { urlStatus.textContent = `✗ ${msg}`; urlStatus.style.color = "#f87171"; }
+    if (loadBtn)   { loadBtn.disabled = false; loadBtn.innerHTML = `<i class="fa fa-arrow-right"></i> Analyze`; loadBtn.style.background = ""; }
+  };
+  const resetBtn = () => {
+    if (loadBtn) { loadBtn.disabled = false; loadBtn.innerHTML = `<i class="fa fa-arrow-right"></i> Analyze`; loadBtn.style.background = ""; }
   };
 
-  // Show ready state if URL already saved in session
-  if (currentUrl) setUrlStatus("✓ Ready", true);
+  // Reset loaded state when user edits the URL
+  urlInput?.addEventListener("input", () => {
+    urlBar?.classList.remove("loaded", "url-error");
+    if (urlStatus) { urlStatus.textContent = ""; }
+    resetBtn();
+  });
+
+  // Show ready state if URL already saved in session (page reload)
+  if (currentUrl) setLoaded();
 
   // ─── Load URL (saves to session, no message sent) ───
   const loadUrl = () => {
     const url = urlInput?.value.trim();
-    if (!url) { setUrlStatus("Enter a URL first", false); return; }
+    if (!url) { setError("Enter a URL first"); urlInput?.focus(); return; }
 
-    if (loadBtn) { loadBtn.disabled = true; loadBtn.innerHTML = `<i class="fa fa-circle-notch fa-spin"></i>`; }
-    setUrlStatus("", true);
+    setLoading();
 
     fetch(window.location.pathname, {
       method: "POST",
@@ -65,15 +88,10 @@ document.addEventListener("DOMContentLoaded", () => {
       .then(r => r.json())
       .then(d => {
         currentUrl = d.url || url;
-        setUrlStatus("✓ Ready — ask your question below", true);
-        if (loadBtn) { loadBtn.disabled = false; loadBtn.innerHTML = `<i class="fa fa-check"></i> Loaded`; }
+        setLoaded();
         input?.focus();
-        setTimeout(() => { if (loadBtn) loadBtn.innerHTML = `<i class="fa fa-arrow-right"></i> Load`; }, 2000);
       })
-      .catch(() => {
-        if (loadBtn) { loadBtn.disabled = false; loadBtn.innerHTML = `<i class="fa fa-arrow-right"></i> Load`; }
-        setUrlStatus("Could not save URL", false);
-      });
+      .catch(() => setError("Could not save URL — check connection"));
   };
 
   if (loadBtn) loadBtn.addEventListener("click", loadUrl);
@@ -87,7 +105,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Guard: must have a URL loaded
     const liveUrl = urlInput?.value.trim();
     if (!currentUrl && !liveUrl) {
-      setUrlStatus("Paste a URL and click Load first", false);
+      setError("Paste a URL and click Analyze first");
       urlInput?.focus();
       return;
     }
@@ -135,7 +153,9 @@ document.addEventListener("DOMContentLoaded", () => {
       }).then(() => {
         currentUrl = "";
         if (urlInput) urlInput.value = "";
-        setUrlStatus("", true);
+        urlBar?.classList.remove("loaded", "url-error");
+        if (urlStatus) urlStatus.textContent = "";
+        resetBtn();
         chatC.innerHTML = `
           <div class="default-text" id="default-welcome">
             <div class="welcome-icon"><i class="fa fa-globe"></i></div>

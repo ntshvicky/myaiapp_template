@@ -12,19 +12,23 @@
 <div class="chat-main" style="display:flex;flex-direction:column;gap:0.6rem;height:calc(100vh - 10rem)">
 
   <!-- ─── URL bar (set once) ─── -->
-  <div class="url-bar-row">
-    <i class="fa fa-globe" style="color:var(--text-secondary);flex-shrink:0"></i>
-    <input
-      type="url"
-      id="url-input"
-      placeholder="https://example.com"
-      value="{{ current_url }}"
-      style="flex:1;background:none;border:none;outline:none;color:var(--text-primary);font-size:0.9rem;min-height:unset;padding:0"
-    >
-    <button id="load-url-btn" title="Load this URL">
-      <i class="fa fa-arrow-right"></i> Load
-    </button>
-    <span id="url-status" style="font-size:0.78rem;white-space:nowrap"></span>
+  <div class="url-bar-wrapper">
+    <label class="url-bar-label"><i class="fa fa-link"></i> Website URL</label>
+    <div class="url-bar-row">
+      <i class="fa fa-globe url-bar-globe"></i>
+      <input
+        type="url"
+        id="url-input"
+        placeholder="https://example.com"
+        value="{{ current_url }}"
+        autocomplete="url"
+        spellcheck="false"
+      >
+      <button id="load-url-btn" title="Load this URL">
+        <i class="fa fa-arrow-right"></i> Analyze
+      </button>
+    </div>
+    <span id="url-status" class="url-bar-status"></span>
   </div>
 
   <!-- ─── Chat area ─── -->
