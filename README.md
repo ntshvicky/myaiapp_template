@@ -1,65 +1,188 @@
-# AI Application Platform
+# 🤖 MyAIApp Platform
 
-A premium, Django-based all-in-one AI SaaS platform. This application provides a modern, glassmorphism-inspired UI with a central dashboard to access multiple AI tools, seamlessly powered by the **Google Gemini API**.
-
-## 🌟 Key Features
-
-*   **Modern Dashboard**: A centralized, responsive dashboard with a premium glassmorphism interface and a global sidebar for seamless navigation.
-*   **Gemini AI Chatbot**: Intelligent conversational AI using a configurable Gemini model, defaulting to `gemini-2.5-flash`.
-*   **Multimodal Image Chat**: Upload images and interact with them using Gemini's powerful vision capabilities.
-*   **Robust Foundation**: Built on Django with integrated user authentication and an expandable service architecture.
+A premium, Django-based all-in-one AI SaaS platform. Features a modern dark UI with multiple AI-powered tools, all running on the **Google Gemini API**.
 
 ---
 
-## 🚀 Quick Start Guide
+## 📸 Screenshots
 
-Follow these steps to get the project up and running locally.
+### 🔐 Login
+![Login](docs/screenshots/01_login.png)
 
-### 1. Install Dependencies
-Ensure you have Python installed, then install the required packages:
+### 🏠 Dashboard
+![Dashboard](docs/screenshots/02_dashboard.png)
+
+### 💬 AI Chatbot
+![Chatbot](docs/screenshots/03_chatbot.png)
+
+### 🖼️ Image Chat (Multimodal)
+![Image Chat](docs/screenshots/04_image_chat.png)
+
+### 📄 Document Chat
+![Document Chat](docs/screenshots/05_document_chat.png)
+
+### 🌐 Website Analyzer
+![Website Analyzer](docs/screenshots/06_website_analyzer.png)
+
+### 🎨 Image Generator
+![Image Generator](docs/screenshots/07_image_generator.png)
+
+### 📋 Resume Analyzer
+![Resume Analyzer](docs/screenshots/08_resume_analyzer.png)
+
+### 📧 Email Manager
+![Email Manager](docs/screenshots/09_email_manager.png)
+
+### ✍️ Content Writer
+![Content Writer](docs/screenshots/10_content_writer.png)
+
+### 🔍 Compare Images
+![Compare Images](docs/screenshots/11_compare_images.png)
+
+### 💳 Pricing Plans
+![Pricing Plans](docs/screenshots/12_pricing_plans.png)
+
+### 📜 History
+![History](docs/screenshots/13_history.png)
+
+### ⚙️ Settings
+![Settings](docs/screenshots/14_settings.png)
+
+---
+
+## 🌟 Features
+
+| Feature | Description |
+|---|---|
+| **AI Chatbot** | Multi-turn chat with Gemini. Supports code highlighting, Mermaid diagrams, and markdown. |
+| **Image Chat** | Upload images and ask questions using Gemini's vision multimodal capabilities. |
+| **Document Chat** | Upload PDFs or text files and chat with their content. |
+| **Website Analyzer** | Enter a URL once, then ask the AI anything about the page content. |
+| **Image Generator** | Chat-based image generation — generate, then ask AI to modify (keeps style + adds changes). |
+| **Resume Analyzer** | Upload JDs and CVs. AI scores, ranks candidates, extracts contact info, rewrites CVs, and enables per-CV chat sessions. |
+| **Email Manager** | Connect via IMAP/SMTP. Read inbox, compose, search, and use AI to write or summarize emails. |
+| **Content Writer** | Generate blog posts, essays, and articles with AI. |
+| **Compare Images** | Upload two images and get a visual similarity score and diff analysis. |
+| **Pricing Plans** | Tiered subscription plans with feature gating. |
+| **History** | Full log of AI token usage across all services. |
+| **Settings** | Manage account details and preferences. |
+| **Theme Switcher** | 7 colour themes (dark, purple, cyan, green, orange, light, navy). |
+
+---
+
+## 🚀 Quick Start
+
+### 1. Clone & Install
+
 ```bash
+git clone https://github.com/ntshvicky/myaiapp_template.git
+cd myaiapp_template
 pip install -r requirements.txt
 ```
-*(Note: We use `google-genai` and `python-dotenv` for AI and environment configuration)*
 
-### 2. Environment Configuration
-Create a `.env` file in the root directory (you can copy the provided `.env.example`):
+### 2. Configure Environment
+
 ```bash
 cp .env.example .env
 ```
-Open the `.env` file and add your Google Gemini API Key:
+
+Edit `.env`:
+
 ```env
 GEMINI_API_KEY=your_gemini_api_key_here
-OPENAI_API_KEY=optional_openai_key
-ANTHROPIC_API_KEY=optional_anthropic_key
 SECRET_KEY=your_django_secret_key
 DEBUG=True
+
+# Optional — for Email Manager
+# IMAP/SMTP credentials are entered per-user inside the app
 ```
 
-### 3. Initialize the Database
-Set up your SQLite/MySQL database schema:
+Get a free Gemini API key at [aistudio.google.com](https://aistudio.google.com/app/apikey).
+
+### 3. Set Up Database
+
 ```bash
-python manage.py makemigrations
 python manage.py migrate
-```
-
-### 4. Create an Admin User
-Create a superuser to access the Django administration panel:
-```bash
 python manage.py createsuperuser
 ```
 
-### 5. Run the Server
-Start the development server:
+### 4. Run
+
 ```bash
 python manage.py runserver
 ```
-Visit `http://127.0.0.1:8000/` in your browser to access the new Dashboard!
+
+Visit **http://127.0.0.1:8000** — log in and start using the tools.
 
 ---
 
-## 🧪 Running Tests
-The project includes a test suite that dynamically sets up an isolated SQLite database to ensure the views and authentication flows function correctly.
+## 🏗️ Architecture
+
+```
+myaiapp_template/
+├── myaiapp/                  # Django project settings & root URLs
+├── services/
+│   ├── chatbot/              # AI chatbot (Gemini text)
+│   ├── image_chat/           # Multimodal image chat
+│   ├── document_chat/        # PDF / text chat
+│   ├── webpage_analysis/     # Website URL analyzer
+│   ├── image_generator/      # Text-to-image (Gemini Imagen)
+│   ├── resume_analysis/      # CV scoring, rewrite, chat
+│   ├── email_manager/        # IMAP/SMTP email client
+│   ├── content_writer/       # Article/blog generation
+│   ├── compare_images/       # Visual similarity comparison
+│   ├── gemini.py             # Shared Gemini API client
+│   ├── ai_router.py          # Token usage tracking
+│   └── access.py             # Feature access / plan gating
+├── templates/                # Django HTML templates
+├── static/
+│   ├── css/style.css         # Global styles + all component CSS
+│   └── js/common.js          # Theme switcher, active nav
+└── docs/screenshots/         # UI screenshots
+```
+
+---
+
+## 🧩 Tech Stack
+
+- **Backend**: Django 4.2, SQLite
+- **AI**: Google Gemini API (`gemini-2.5-flash`, Gemini image models)
+- **Frontend**: Vanilla JS, CSS custom properties (no framework)
+- **Charts**: Chart.js
+- **Documents**: python-docx (CV download as Word)
+- **PDF parsing**: PyMuPDF (`fitz`)
+- **Email**: Python `imaplib` + `smtplib`
+- **Screenshots**: Playwright (dev tool)
+
+---
+
+## 📦 Requirements
+
+```
+django
+google-genai
+python-dotenv
+pymupdf
+python-docx
+pillow
+```
+
+Install all:
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## 🧪 Tests
+
 ```bash
 python manage.py test myaiapp
 ```
+
+---
+
+## 📄 License
+
+MIT — free to use, modify, and deploy.

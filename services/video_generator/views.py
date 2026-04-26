@@ -10,7 +10,9 @@ class VideoGeneratorView(FeatureAccessMixin, View):
     template_name = "services/video_generator/generator.html"
 
     def get(self, request):
-        session, _ = VideoSession.objects.get_or_create(user=request.user)
+        session = VideoSession.objects.filter(user=request.user).last()
+        if not session:
+            session = VideoSession.objects.create(user=request.user)
         vids = session.messages.order_by("-timestamp")
         return render(request, self.template_name, {"session": session, "videos": vids})
 

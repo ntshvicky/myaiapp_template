@@ -91,17 +91,22 @@
 </script>
 <script src="{% static 'services/webpage_analysis/js/analysis.js' %}"></script>
 <script>
-// Apply markdown to existing bot messages on page load
-document.querySelectorAll(".ai-markdown").forEach(node => {
-  if (!window.marked || !window.DOMPurify) return;
-  marked.setOptions({ breaks: true, gfm: true });
-  node.innerHTML = DOMPurify.sanitize(marked.parse(node.textContent || ""));
-});
-// Suggestion chips → fill input (no URL prefix needed)
-document.querySelectorAll(".tag-chip").forEach(chip => {
-  chip.addEventListener("click", () => {
-    const input = document.getElementById("chat-input");
-    if (input) { input.value = chip.dataset.prompt || chip.textContent.trim(); input.focus(); }
+document.addEventListener("DOMContentLoaded", () => {
+  // Convert markdown in existing bot messages (defer scripts are ready by DOMContentLoaded)
+  document.querySelectorAll(".ai-markdown").forEach(node => {
+    if (!window.marked || !window.DOMPurify) return;
+    marked.setOptions({ breaks: true, gfm: true });
+    const raw = node.textContent || "";
+    node.innerHTML = DOMPurify.sanitize(marked.parse(raw));
+    if (window.hljs) node.querySelectorAll("pre code").forEach(b => hljs.highlightElement(b));
+  });
+
+  // Suggestion chips → fill input
+  document.querySelectorAll(".tag-chip[data-prompt]").forEach(chip => {
+    chip.addEventListener("click", () => {
+      const input = document.getElementById("chat-input");
+      if (input) { input.value = chip.dataset.prompt; input.focus(); }
+    });
   });
 });
 </script>

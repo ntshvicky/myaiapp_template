@@ -171,10 +171,20 @@
 </script>
 <script src="{% static 'services/document_chat/js/chat.js' %}"></script>
 <script>
-document.querySelectorAll(".tag-chip").forEach(chip => {
-  chip.addEventListener("click", () => {
-    const input = document.getElementById("chat-input");
-    if (input) { input.value = chip.dataset.prompt || chip.textContent.trim(); input.focus(); }
+document.addEventListener("DOMContentLoaded", () => {
+  // Render markdown in existing bot messages
+  document.querySelectorAll(".ai-markdown").forEach(node => {
+    if (!window.marked || !window.DOMPurify) return;
+    marked.setOptions({ breaks: true, gfm: true });
+    node.innerHTML = DOMPurify.sanitize(marked.parse(node.textContent || ""));
+    if (window.hljs) node.querySelectorAll("pre code").forEach(b => hljs.highlightElement(b));
+  });
+  // Suggestion chips
+  document.querySelectorAll(".tag-chip[data-prompt]").forEach(chip => {
+    chip.addEventListener("click", () => {
+      const input = document.getElementById("chat-input");
+      if (input) { input.value = chip.dataset.prompt; input.focus(); }
+    });
   });
 });
 </script>

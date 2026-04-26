@@ -107,4 +107,14 @@
     const SESSION_MODEL = "{{ session.model_name }}";
   </script>
   <script src="{% static 'services/chatbot/js/chatbot.js' %}"></script>
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll(".ai-markdown").forEach(node => {
+      if (!window.marked || !window.DOMPurify) return;
+      marked.setOptions({ breaks: true, gfm: true });
+      node.innerHTML = DOMPurify.sanitize(marked.parse(node.textContent || ""));
+      if (window.hljs) node.querySelectorAll("pre code").forEach(b => hljs.highlightElement(b));
+    });
+  });
+  </script>
 {% endblock %}

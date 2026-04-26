@@ -4,98 +4,360 @@
 {% block title %}Image Generator | MyAIApp{% endblock %}
 
 {% block main_content %}
-<div class="dashboard-header compact-header">
-  <h1>Image Generator</h1>
-  <p>Describe what you want to see and the AI will generate it for you.</p>
-</div>
+<div class="imgchat-wrap">
 
-<div class="image-chat-layout">
-  <!-- Left panel: prompt input -->
-  <aside class="image-chat-panel">
-    <section class="settings-card" style="gap:0.85rem">
-      <h2><i class="fa fa-wand-magic-sparkles" style="color:var(--accent)"></i> Generate Image</h2>
-      <label style="color:var(--text-secondary);font-size:0.85rem;display:grid;gap:0.4rem">
-        Your prompt
-        <textarea id="prompt-input" rows="5" placeholder="A futuristic city at sunset, cyberpunk style, ultra-detailed, 4K…" style="resize:vertical"></textarea>
-      </label>
-      <button id="gen-btn" style="width:100%;font-size:0.95rem">
-        <i class="fa fa-image"></i> Generate
-      </button>
-      <div id="gen-status" style="display:none;text-align:center;color:var(--text-secondary);font-size:0.85rem">
-        <i class="fa fa-circle-notch fa-spin"></i> Generating…
+  <!-- ── Sidebar ─────────────────────────────────────────────── -->
+  <aside class="imgchat-sidebar">
+    <section class="imgchat-card">
+      <h3 class="imgchat-section-title"><i class="fa fa-wand-magic-sparkles"></i> Image Generator</h3>
+      <p style="font-size:0.8rem;color:var(--text-secondary);margin:0 0 0.75rem">
+        Describe your image, then ask the AI to modify it — it keeps your style and makes changes.
+      </p>
+    </section>
+
+    <section class="imgchat-card">
+      <h3 class="imgchat-section-title"><i class="fa fa-lightbulb"></i> Prompt Ideas</h3>
+      <div class="imgchat-idea-list">
+        <button class="imgchat-idea-btn" data-prompt="A serene Japanese garden with cherry blossoms, photorealistic, golden hour lighting">🌸 Japanese garden</button>
+        <button class="imgchat-idea-btn" data-prompt="Futuristic cyberpunk city at night with neon lights, rain reflections, ultra-detailed">🌆 Cyberpunk city</button>
+        <button class="imgchat-idea-btn" data-prompt="A majestic dragon flying over snow-capped mountains, fantasy art, dramatic lighting">🐉 Fantasy dragon</button>
+        <button class="imgchat-idea-btn" data-prompt="Abstract digital art with flowing geometric shapes, vibrant colors, modern design">🎨 Abstract art</button>
+        <button class="imgchat-idea-btn" data-prompt="Cozy coffee shop interior, warm lighting, autumn vibes, watercolor illustration">☕ Cozy café</button>
+        <button class="imgchat-idea-btn" data-prompt="Deep space nebula with colorful gas clouds, stars and a distant galaxy, NASA style">🌌 Space nebula</button>
+        <button class="imgchat-idea-btn" data-prompt="Portrait of a wise old wizard with glowing blue eyes, detailed fantasy illustration">🧙 Fantasy portrait</button>
+        <button class="imgchat-idea-btn" data-prompt="Aerial view of a tropical island with turquoise water, white sand, lush jungle">🏝️ Tropical island</button>
       </div>
     </section>
 
-    <section class="settings-card" style="gap:0.5rem">
-      <h2 style="font-size:0.85rem">✨ Prompt Ideas</h2>
-      <div style="display:flex;flex-direction:column;gap:0.35rem">
-        <button class="prompt-idea-btn" data-prompt="A serene Japanese garden with cherry blossoms, photorealistic, golden hour lighting">🌸 Japanese garden</button>
-        <button class="prompt-idea-btn" data-prompt="Futuristic cyberpunk city at night with neon lights, rain reflections, ultra-detailed">🌆 Cyberpunk city</button>
-        <button class="prompt-idea-btn" data-prompt="A majestic dragon flying over snow-capped mountains, fantasy art, dramatic lighting">🐉 Fantasy dragon</button>
-        <button class="prompt-idea-btn" data-prompt="Abstract digital art with flowing geometric shapes, vibrant colors, modern design">🎨 Abstract art</button>
-        <button class="prompt-idea-btn" data-prompt="Cozy coffee shop interior, warm lighting, autumn vibes, watercolor illustration">☕ Cozy café</button>
-        <button class="prompt-idea-btn" data-prompt="Deep space nebula with colorful gas clouds, stars, and a distant galaxy, NASA style">🌌 Space nebula</button>
-        <button class="prompt-idea-btn" data-prompt="Portrait of a wise old wizard with glowing blue eyes, detailed fantasy illustration">🧙 Fantasy portrait</button>
-      </div>
+    <section class="imgchat-card" style="font-size:0.78rem;color:var(--text-secondary)">
+      <strong style="display:block;margin-bottom:0.4rem;color:var(--text)">💡 How to modify</strong>
+      After generating an image, click <strong>Modify</strong> on it, then describe the change — e.g. <em>"make the sky purple"</em>, <em>"add a waterfall"</em>, <em>"change to oil painting style"</em>.
     </section>
   </aside>
 
-  <!-- Right panel: generated images -->
-  <section class="image-chat-main" style="display:flex;flex-direction:column;gap:0.75rem;overflow-y:auto">
-    {% if not images %}
-      <div class="chat-container" style="flex:1">
-        <div class="default-text">
-          <div class="welcome-icon"><i class="fa fa-wand-magic-sparkles"></i></div>
-          <h2>Image Generator</h2>
-          <p>Write a detailed description and let the AI create a unique image for you.</p>
-          <div class="welcome-chips">
-            <span class="tag-chip" style="cursor:default">AI-powered</span>
-            <span class="tag-chip" style="cursor:default">Any style</span>
-            <span class="tag-chip" style="cursor:default">Instant creation</span>
+  <!-- ── Chat area ───────────────────────────────────────────── -->
+  <div class="imgchat-main">
+    <!-- Messages -->
+    <div class="imgchat-messages" id="chat-messages">
+      {% if not chat_messages %}
+      <div class="imgchat-placeholder" id="placeholder">
+        <div class="imgchat-placeholder-icon"><i class="fa fa-image"></i></div>
+        <h2>Generate Your First Image</h2>
+        <p>Type a description below or pick a prompt idea from the sidebar.</p>
+      </div>
+      {% else %}
+        {% for msg in chat_messages %}
+        <!-- User bubble -->
+        <div class="imgchat-msg user" id="user-msg-{{ msg.id }}">
+          <button class="imgchat-del-msg" title="Delete" onclick="deleteMessage({{ msg.id }}, 'user-msg-{{ msg.id }}', 'msg-{{ msg.id }}')">
+            <i class="fa fa-trash"></i>
+          </button>
+          <div class="imgchat-msg-bubble user">{{ msg.user_text|default:msg.prompt }}</div>
+        </div>
+        <!-- AI image bubble -->
+        <div class="imgchat-msg bot" id="msg-{{ msg.id }}">
+          <div class="imgchat-msg-avatar"><i class="fa fa-wand-magic-sparkles"></i></div>
+          <div class="imgchat-msg-body">
+            {% with url=msg.get_image_url %}
+            {% if url %}
+            <div class="imgchat-image-card">
+              <img src="{{ url }}" alt="{{ msg.prompt }}" loading="lazy"
+                   style="width:100%;max-height:500px;object-fit:contain;display:block;border-radius:0.5rem 0.5rem 0 0;background:rgba(0,0,0,0.2)"
+                   onerror="this.parentElement.querySelector('.imgchat-img-error').style.display='flex';this.style.display='none'">
+              <div class="imgchat-img-error" style="display:none;min-height:120px;align-items:center;justify-content:center;color:var(--text-secondary);font-size:0.85rem;flex-direction:column;gap:0.4rem">
+                <i class="fa fa-image" style="font-size:1.5rem;opacity:0.4"></i>
+                Image unavailable
+              </div>
+              <div class="imgchat-image-footer">
+                <span class="imgchat-prompt-label">{{ msg.prompt|truncatechars:90 }}</span>
+                <div class="imgchat-image-actions">
+                  <a href="{{ url }}" download class="imgchat-action-btn" title="Download">
+                    <i class="fa fa-download"></i>
+                  </a>
+                  <button class="imgchat-action-btn" title="Modify this image"
+                    onclick="setModifyMode({{ msg.id }}, `{{ msg.prompt|escapejs }}`)">
+                    <i class="fa fa-pen-to-square"></i> Modify
+                  </button>
+                  <button class="imgchat-action-btn imgchat-action-del" title="Delete"
+                    onclick="deleteMessage({{ msg.id }}, 'user-msg-{{ msg.id }}', 'msg-{{ msg.id }}')">
+                    <i class="fa fa-trash"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+            {% endwith %}
+          </div>
+        </div>
+        {% endfor %}
+      {% endif %}
+    </div>
+
+    <!-- Input area -->
+    <div class="imgchat-input-area">
+      <!-- Modify mode banner -->
+      <div id="modify-banner" class="imgchat-modify-banner" style="display:none">
+        <i class="fa fa-pen-to-square"></i>
+        <span id="modify-banner-text">Modifying image…</span>
+        <button class="imgchat-cancel-modify" onclick="cancelModify()" title="Cancel">
+          <i class="fa fa-xmark"></i> Cancel
+        </button>
+      </div>
+
+      <div class="imgchat-input-row">
+        <textarea id="prompt-input"
+          placeholder="Describe the image you want to generate…"
+          rows="2"></textarea>
+        <button id="send-btn" onclick="sendMessage()" title="Generate">
+          <i class="fa fa-paper-plane"></i>
+        </button>
+        <button id="clear-btn" onclick="clearAll()" title="Clear all messages"
+          style="width:38px;height:38px;background:none!important;border:1px solid var(--border)!important;border-radius:50%;color:var(--text-secondary);cursor:pointer;min-height:unset!important;display:flex;align-items:center;justify-content:center;font-size:0.8rem;flex-shrink:0;transition:color .15s,border-color .15s">
+          <i class="fa fa-trash"></i>
+        </button>
+      </div>
+      <div id="gen-status" class="imgchat-status" style="display:none">
+        <i class="fa fa-spinner fa-spin"></i> <span id="status-text">Generating…</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const SESSION_ID = "{{ session.id }}";
+const CSRF      = "{{ csrf_token }}";
+const URL_BASE  = "{% url 'image_generator:generator' %}";
+
+let modifyMsgId     = null;
+let modifyPromptRef = null;
+
+// ── Prompt idea buttons ───────────────────────────────────────────────────────
+document.querySelectorAll(".imgchat-idea-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    cancelModify();
+    document.getElementById("prompt-input").value = btn.dataset.prompt;
+    document.getElementById("prompt-input").focus();
+  });
+});
+
+// ── Enter to send ─────────────────────────────────────────────────────────────
+document.getElementById("prompt-input").addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+
+// ── Send message ──────────────────────────────────────────────────────────────
+function sendMessage() {
+  const input = document.getElementById("prompt-input");
+  const text  = input.value.trim();
+  if (!text) { input.focus(); return; }
+
+  const isModify = modifyMsgId !== null;
+  input.value = "";
+
+  setLoading(true, isModify ? "Regenerating with changes…" : "Generating…");
+  removePlaceholder();
+
+  // Show user bubble immediately
+  appendUserBubble(text);
+
+  const params = isModify
+    ? { action: "modify", session_id: SESSION_ID, modification: text, base_message_id: modifyMsgId }
+    : { action: "generate", session_id: SESSION_ID, prompt: text };
+
+  cancelModify(false); // reset mode without clearing input (already cleared)
+
+  fetch(URL_BASE, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded", "X-CSRFToken": CSRF },
+    body: new URLSearchParams(params),
+  })
+  .then(r => r.json())
+  .then(d => {
+    setLoading(false);
+    if (d.error) {
+      appendBotError(d.error);
+      return;
+    }
+    appendBotImage(d.id, d.image_url, d.prompt, d.user_text);
+  })
+  .catch(() => {
+    setLoading(false);
+    appendBotError("Network error. Please try again.");
+  });
+}
+
+// ── Set modify mode ───────────────────────────────────────────────────────────
+function setModifyMode(msgId, promptText) {
+  modifyMsgId     = msgId;
+  modifyPromptRef = promptText;
+
+  const banner = document.getElementById("modify-banner");
+  const bannerText = document.getElementById("modify-banner-text");
+  banner.style.display = "flex";
+  bannerText.textContent = "Modifying: " + promptText.slice(0, 60) + (promptText.length > 60 ? "…" : "");
+
+  const input = document.getElementById("prompt-input");
+  input.placeholder = "Describe your changes — e.g. make the sky purple, add snow…";
+  input.focus();
+
+  // Highlight the base image
+  document.querySelectorAll(".imgchat-msg.bot").forEach(el => el.classList.remove("modifying"));
+  const base = document.getElementById("msg-" + msgId);
+  if (base) base.classList.add("modifying");
+}
+
+function cancelModify(clearInput = true) {
+  modifyMsgId = null;
+  modifyPromptRef = null;
+  document.getElementById("modify-banner").style.display = "none";
+  document.getElementById("prompt-input").placeholder = "Describe the image you want to generate…";
+  document.querySelectorAll(".imgchat-msg.bot").forEach(el => el.classList.remove("modifying"));
+  if (clearInput) document.getElementById("prompt-input").value = "";
+}
+
+// ── DOM helpers ───────────────────────────────────────────────────────────────
+function removePlaceholder() {
+  document.getElementById("placeholder")?.remove();
+}
+
+function appendUserBubble(text, msgId) {
+  const msgs = document.getElementById("chat-messages");
+  const uid = msgId ? `id="user-msg-${msgId}"` : "";
+  const delBtn = msgId
+    ? `<button class="imgchat-del-msg" title="Delete" onclick="deleteMessage(${msgId},'user-msg-${msgId}','msg-${msgId}')"><i class="fa fa-trash"></i></button>`
+    : "";
+  msgs.insertAdjacentHTML("beforeend", `
+    <div class="imgchat-msg user" ${uid}>
+      ${delBtn}
+      <div class="imgchat-msg-bubble user">${escHtml(text)}</div>
+    </div>
+  `);
+  scrollBottom();
+}
+
+function appendBotImage(id, imageUrl, prompt, userText) {
+  // Update the pending user bubble with its real id so delete works
+  const msgs = document.getElementById("chat-messages");
+  const pendingUser = msgs.querySelector(".imgchat-msg.user:not([id])");
+  if (pendingUser) {
+    pendingUser.id = `user-msg-${id}`;
+    pendingUser.insertAdjacentHTML("afterbegin",
+      `<button class="imgchat-del-msg" title="Delete" onclick="deleteMessage(${id},'user-msg-${id}','msg-${id}')"><i class="fa fa-trash"></i></button>`
+    );
+  }
+
+  msgs.insertAdjacentHTML("beforeend", `
+    <div class="imgchat-msg bot" id="msg-${id}">
+      <div class="imgchat-msg-avatar"><i class="fa fa-wand-magic-sparkles"></i></div>
+      <div class="imgchat-msg-body">
+        <div class="imgchat-image-card">
+          <img src="${escHtml(imageUrl)}" alt="${escHtml(prompt)}"
+               style="width:100%;max-height:500px;object-fit:contain;display:block;border-radius:0.5rem 0.5rem 0 0;background:rgba(0,0,0,0.2)"
+               onerror="this.parentElement.querySelector('.imgchat-img-error').style.display='flex';this.style.display='none'">
+          <div class="imgchat-img-error" style="display:none;min-height:120px;align-items:center;justify-content:center;color:var(--text-secondary);font-size:0.85rem;flex-direction:column;gap:0.4rem">
+            <i class="fa fa-image" style="font-size:1.5rem;opacity:0.4"></i>
+            Image unavailable
+          </div>
+          <div class="imgchat-image-footer">
+            <span class="imgchat-prompt-label">${escHtml(prompt.slice(0, 90))}${prompt.length > 90 ? '…' : ''}</span>
+            <div class="imgchat-image-actions">
+              <a href="${escHtml(imageUrl)}" download class="imgchat-action-btn" title="Download">
+                <i class="fa fa-download"></i>
+              </a>
+              <button class="imgchat-action-btn" title="Modify this image"
+                onclick="setModifyMode(${id}, \`${escJs(prompt)}\`)">
+                <i class="fa fa-pen-to-square"></i> Modify
+              </button>
+              <button class="imgchat-action-btn imgchat-action-del" title="Delete"
+                onclick="deleteMessage(${id},'user-msg-${id}','msg-${id}')">
+                <i class="fa fa-trash"></i>
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    {% endif %}
+    </div>
+  `);
+  scrollBottom();
+}
 
-    <!-- New generation result (inserted by JS) -->
-    <div id="new-image-area"></div>
-
-    <!-- Previous generations -->
-    {% if images %}
-    <div style="display:grid;gap:0.75rem">
-      <h3 style="font-size:0.85rem;color:var(--text-secondary);border-bottom:1px solid var(--glass-border);padding-bottom:0.4rem">Previous Generations</h3>
-      <div id="images-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:0.75rem">
-        {% for img in images %}
-          <div class="generated-image" style="border-radius:0.6rem;overflow:hidden;background:var(--card-bg);border:1px solid var(--glass-border)">
-            <img src="{{ img.image_url }}" alt="{{ img.prompt }}" style="width:100%;aspect-ratio:1;object-fit:cover;display:block"
-                 onerror="this.style.display='none'">
-            <div style="padding:0.6rem 0.75rem">
-              <p style="font-size:0.78rem;color:var(--text-secondary);margin:0;line-height:1.4">{{ img.prompt|truncatechars:80 }}</p>
-            </div>
-          </div>
-        {% endfor %}
+function appendBotError(msg) {
+  const msgs = document.getElementById("chat-messages");
+  msgs.insertAdjacentHTML("beforeend", `
+    <div class="imgchat-msg bot">
+      <div class="imgchat-msg-avatar"><i class="fa fa-wand-magic-sparkles"></i></div>
+      <div class="imgchat-msg-body">
+        <div style="color:#f87171;font-size:0.86rem;padding:0.5rem">${escHtml(msg)}</div>
       </div>
     </div>
-    {% endif %}
-  </section>
-</div>
+  `);
+  scrollBottom();
+}
 
-<input type="hidden" id="session-id" value="{{ session.id }}">
-{% endblock %}
+function setLoading(on, text = "Generating…") {
+  const el = document.getElementById("gen-status");
+  const btn = document.getElementById("send-btn");
+  el.style.display = on ? "flex" : "none";
+  document.getElementById("status-text").textContent = text;
+  btn.disabled = on;
+}
 
-{% block extra_js %}
-<script>
-  const SESSION_ID = "{{ session.id }}";
-  const CSRF_TOKEN = "{{ csrf_token }}";
-</script>
-<script src="{% static 'services/image_generator/js/generator.js' %}"></script>
-<script>
-// Prompt idea buttons
-document.querySelectorAll(".prompt-idea-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    const el = document.getElementById("prompt-input");
-    if (el) { el.value = btn.dataset.prompt; el.focus(); }
+function scrollBottom() {
+  const msgs = document.getElementById("chat-messages");
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+// ── Delete a single message pair ─────────────────────────────────────────────
+function deleteMessage(msgId, userElemId, botElemId) {
+  fetch(URL_BASE, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded", "X-CSRFToken": CSRF },
+    body: new URLSearchParams({ action: "delete_message", session_id: SESSION_ID, message_id: msgId }),
+  }).then(r => r.json()).then(d => {
+    if (d.ok) {
+      document.getElementById(userElemId)?.remove();
+      document.getElementById(botElemId)?.remove();
+      // Show placeholder if no messages left
+      if (!document.querySelector(".imgchat-msg")) showPlaceholder();
+    }
   });
-});
+}
+
+// ── Clear all messages ────────────────────────────────────────────────────────
+function clearAll() {
+  if (!confirm("Clear all generated images?")) return;
+  fetch(URL_BASE, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded", "X-CSRFToken": CSRF },
+    body: new URLSearchParams({ action: "clear_all", session_id: SESSION_ID }),
+  }).then(r => r.json()).then(d => {
+    if (d.ok) {
+      document.getElementById("chat-messages").innerHTML = "";
+      showPlaceholder();
+    }
+  });
+}
+
+function showPlaceholder() {
+  const msgs = document.getElementById("chat-messages");
+  if (!document.getElementById("placeholder")) {
+    msgs.insertAdjacentHTML("afterbegin", `
+      <div class="imgchat-placeholder" id="placeholder">
+        <div class="imgchat-placeholder-icon"><i class="fa fa-image"></i></div>
+        <h2>Generate Your First Image</h2>
+        <p>Type a description below or pick a prompt idea from the sidebar.</p>
+      </div>`);
+  }
+}
+
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+function escJs(s) {
+  return String(s).replace(/\\/g, "\\\\").replace(/`/g, "\\`").replace(/\$/g, "\\$");
+}
 </script>
 {% endblock %}

@@ -10,7 +10,9 @@ class MusicGeneratorView(FeatureAccessMixin, View):
     template_name="services/music_generator/generator.html"
 
     def get(self, request):
-        session,_=MusicSession.objects.get_or_create(user=request.user)
+        session = MusicSession.objects.filter(user=request.user).last()
+        if not session:
+            session = MusicSession.objects.create(user=request.user)
         msgs=session.messages.order_by("-timestamp")
         return render(request,self.template_name,{"session":session,"musics":msgs})
 

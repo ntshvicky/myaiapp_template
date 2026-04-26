@@ -11,7 +11,9 @@ class AnalysisView(FeatureAccessMixin, View):
     template_name = "services/webpage_analysis/analysis.html"
 
     def get(self, request):
-        session, _ = AnalysisSession.objects.get_or_create(user=request.user)
+        session = AnalysisSession.objects.filter(user=request.user).last()
+        if not session:
+            session = AnalysisSession.objects.create(user=request.user)
         chat_messages = session.messages.order_by("timestamp")
         return render(request, self.template_name, {
             "session": session,
