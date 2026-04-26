@@ -43,6 +43,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',   # serve static files in production
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -72,32 +73,41 @@ TEMPLATES = [
 WSGI_APPLICATION = 'myaiapp.wsgi.application'
 ASGI_APPLICATION = 'myaiapp.asgi.application'
 
-DATABASE_ENGINE = os.environ.get("DATABASE_ENGINE", "sqlite").lower()
-
-if DATABASE_ENGINE == "mysql":
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': os.environ.get('MYSQL_DATABASE', 'myaiapp_db'),
-            'USER': os.environ.get('MYSQL_USER', 'root'),
-            'PASSWORD': os.environ.get('MYSQL_PASSWORD', ''),
-            'HOST': os.environ.get('MYSQL_HOST', 'localhost'),
-            'PORT': os.environ.get('MYSQL_PORT', '3306'),
-        }
-    }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
-
 import sys
-if 'test' in sys.argv:
-    DATABASES['default'] = {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+import dj_database_url
+
+# DATABASE_URL env var wins (Vercel Postgres / Neon / Supabase / Railway)
+_DATABASE_URL = os.environ.get("DATABASE_URL", "")
+
+if _DATABASE_URL:
+    DATABASES = {"default": dj_database_url.parse(_DATABASE_URL, conn_max_age=600)}
+else:
+    DATABASE_ENGINE = os.environ.get("DATABASE_ENGINE", "sqlite").lower()
+    if DATABASE_ENGINE == "mysql":
+        DATABASES = {
+            "default": {
+                "ENGINE": "django.db.backends.mysql",
+                "NAME": os.environ.get("MYSQL_DATABASE", "myaiapp_db"),
+                "USER": os.environ.get("MYSQL_USER", "root"),
+                "PASSWORD": os.environ.get("MYSQL_PASSWORD", ""),
+                "HOST": os.environ.get("MYSQL_HOST", "localhost"),
+                "PORT": os.environ.get("MYSQL_PORT", "3306"),
+            }
+        }
+    else:
+        # SQLite — store in /tmp on serverless so the filesystem is writable
+        _DB_PATH = Path("/tmp/db.sqlite3") if os.environ.get("VERCEL") else BASE_DIR / "db.sqlite3"
+        DATABASES = {
+            "default": {
+                "ENGINE": "django.db.backends.sqlite3",
+                "NAME": _DB_PATH,
+            }
+        }
+
+if "test" in sys.argv:
+    DATABASES["default"] = {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
     }
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -123,9 +133,12 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
-
-# where collectstatic will deposit files
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+# WhiteNoise — compress and cache-bust static files in production
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Media files: use /tmp on Vercel (serverless FS is read-only), local otherwise
+_IS_VERCEL = bool(os.environ.get("VERCEL"))
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = Path("/tmp/media") if _IS_VERCEL else BASE_DIR / 'media'

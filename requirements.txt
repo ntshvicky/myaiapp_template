@@ -1,30 +1,27 @@
-# Django & Database
+# ── Django core ──────────────────────────────────────────────────────────────
 Django>=4.2,<5.0
-mysqlclient>=2.1
-
-# REST & CORS (for AJAX/API endpoints)
-djangorestframework>=3.13
-django-cors-headers>=3.13
-
-# Environment config
-python-dotenv>=0.21.0
-
-# AI / LangChain stack
-openai>=0.27.0
-langchain>=0.0.362
-google-genai>=1.0.0
-
-# Document loaders & Vector DB
-unstructured>=0.7.0
-chromadb>=0.3.20
-PyMuPDF>=1.24.0
-beautifulsoup4>=4.12.0
-requests>=2.31.0
-
-# Image handling (for uploads)
-pillow>=9.0.0
-
-# Production WSGI server (optional)
 gunicorn>=20.1.0
 
-PyMysql
+# ── Static files (Vercel / production) ───────────────────────────────────────
+whitenoise>=6.6.0
+
+# ── Database ──────────────────────────────────────────────────────────────────
+dj-database-url>=2.1.0
+psycopg2-binary>=2.9.0   # PostgreSQL driver (for Vercel Postgres / Neon / Supabase)
+mysqlclient>=2.1         # MySQL driver (optional, local dev)
+PyMySQL                  # Pure-Python MySQL fallback
+
+# ── Environment ───────────────────────────────────────────────────────────────
+python-dotenv>=0.21.0
+
+# ── Google Gemini AI ──────────────────────────────────────────────────────────
+google-genai>=1.0.0
+
+# ── Document / file handling ──────────────────────────────────────────────────
+PyMuPDF>=1.24.0           # PDF text extraction (fitz)
+python-docx>=1.1.0        # Generate .docx files
+pillow>=9.0.0             # Image processing
+
+# ── Web scraping ──────────────────────────────────────────────────────────────
+beautifulsoup4>=4.12.0
+requests>=2.31.0
