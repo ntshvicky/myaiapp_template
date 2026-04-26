@@ -12,8 +12,8 @@ class AnalysisView(FeatureAccessMixin, View):
 
     def get(self, request):
         session, _ = AnalysisSession.objects.get_or_create(user=request.user)
-        messages = session.messages.order_by("timestamp")
-        return render(request, self.template_name, {"session": session, "messages": messages})
+        chat_messages = session.messages.order_by("timestamp")
+        return render(request, self.template_name, {"session": session, "chat_messages": chat_messages})
 
     def post(self, request):
         session_id = request.POST.get("session_id")

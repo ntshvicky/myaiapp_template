@@ -20,6 +20,7 @@ class ImageChatView(FeatureAccessMixin, View):
         form=ImageUploadForm(request.POST,request.FILES)
         if form.is_valid():
             img=form.save(commit=False); img.user=request.user; img.save()
+            return redirect(f"{request.path}?image_id={img.id}")
         return redirect(request.path)
 
 class ImageChatAjax(FeatureAccessMixin, View):

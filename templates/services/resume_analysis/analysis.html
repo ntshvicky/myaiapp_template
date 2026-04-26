@@ -1,27 +1,143 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Resume Analysis{% endblock %}
+{% block title %}Resume Analyzer | MyAIApp{% endblock %}
 {% block main_content %}
-  <h1>Resume Analysis</h1>
-  <form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ jds|length }} JDs, {{ cvs|length }} CVs uploaded.<br>
-    JD: {{ jd_form.file }} <button name="upload_jd">Upload JD</button><br>
-    CV: {{ cv_form.file }} <button name="upload_cv">Upload CV</button><br>
-  </form>
+<div class="dashboard-header compact-header">
+  <h1>Resume Analyzer</h1>
+  <p>Upload a job description and CVs. The AI will rank candidates and explain fit.</p>
+</div>
 
-  <select id="jd-select"><option value="">Select JD…</option>
-    {% for jd in jds %}<option value="{{ jd.id }}">{{ jd.file.name }}</option>{% endfor %}
-  </select>
-  <select id="cv-select" multiple>
-    {% for cv in cvs %}<option value="{{ cv.id }}">{{ cv.file.name }}</option>{% endfor %}
-  </select>
-  <button id="compare-btn">Analyze</button>
-  <div id="results"></div>
+<div class="image-chat-layout">
+  <!-- Upload panel -->
+  <aside class="image-chat-panel">
+    <section class="settings-card">
+      <h2>Job Description</h2>
+      <form method="post" enctype="multipart/form-data" class="material-form">
+        {% csrf_token %}
+        <label>Upload JD (PDF) {{ jd_form.file }}</label>
+        <button type="submit" name="upload_jd"><i class="fa fa-upload"></i> Upload JD</button>
+      </form>
+      {% if jds %}
+        <div style="margin-top:0.75rem;display:grid;gap:0.4rem">
+          {% for jd in jds %}
+            <div style="font-size:0.8rem;padding:0.4rem 0.6rem;background:var(--surface);border-radius:0.4rem;display:flex;align-items:center;gap:0.5rem">
+              <i class="fa fa-file-lines" style="color:var(--accent)"></i>
+              {{ jd.file.name|slice:"3:"|truncatechars:35 }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </section>
 
-  <script>
-    const AJAX_URL="{% url 'resume_analysis:analysis' %}", CSRF_TOKEN="{{ csrf_token }}";
-  </script>
-  <script src="{% static 'services/resume_analysis/js/analysis.js' %}"></script>
+    <section class="settings-card">
+      <h2>Candidate CVs</h2>
+      <form method="post" enctype="multipart/form-data" class="material-form">
+        {% csrf_token %}
+        <label>Upload CV (PDF) {{ cv_form.file }}</label>
+        <button type="submit" name="upload_cv"><i class="fa fa-upload"></i> Upload CV</button>
+      </form>
+      {% if cvs %}
+        <div style="margin-top:0.75rem;display:grid;gap:0.4rem">
+          {% for cv in cvs %}
+            <div style="font-size:0.8rem;padding:0.4rem 0.6rem;background:var(--surface);border-radius:0.4rem;display:flex;align-items:center;gap:0.5rem">
+              <i class="fa fa-user" style="color:#4ade80"></i>
+              {{ cv.file.name|slice:"3:"|truncatechars:35 }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </section>
+
+    <section class="settings-card" style="gap:0.75rem">
+      <h2>Select &amp; Analyze</h2>
+      <label style="color:var(--text-secondary);font-size:0.85rem;display:grid;gap:0.4rem">
+        Job Description
+        <select id="jd-select">
+          <option value="">— choose JD —</option>
+          {% for jd in jds %}<option value="{{ jd.id }}">{{ jd.file.name|slice:"3:"|truncatechars:30 }}</option>{% endfor %}
+        </select>
+      </label>
+      <label style="color:var(--text-secondary);font-size:0.85rem;display:grid;gap:0.4rem">
+        Candidates (multi-select)
+        <select id="cv-select" multiple style="min-height:100px">
+          {% for cv in cvs %}<option value="{{ cv.id }}">{{ cv.file.name|slice:"3:"|truncatechars:30 }}</option>{% endfor %}
+        </select>
+      </label>
+      <button id="compare-btn"><i class="fa fa-magnifying-glass"></i> Analyze</button>
+    </section>
+  </aside>
+
+  <!-- Results panel -->
+  <section class="image-chat-main">
+    <div class="chat-container" id="results" style="height:calc(100vh - 12rem)">
+      <div class="default-text">
+        <div class="welcome-icon"><i class="fa fa-briefcase"></i></div>
+        <h2>Resume Analyzer</h2>
+        <p>Upload a JD and one or more CVs, then click <strong>Analyze</strong> to get ranked results.</p>
+        <div class="welcome-chips">
+          <span class="tag-chip" style="cursor:default">Skill match scoring</span>
+          <span class="tag-chip" style="cursor:default">Gap analysis</span>
+          <span class="tag-chip" style="cursor:default">Candidate ranking</span>
+          <span class="tag-chip" style="cursor:default">Interview questions</span>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+  const AJAX_URL   = "{% url 'resume_analysis:analysis' %}";
+  const CSRF_TOKEN = "{{ csrf_token }}";
+</script>
+<script src="{% static 'services/resume_analysis/js/analysis.js' %}"></script>
+<script>
+// Upgrade results rendering to use markdown
+const _origRender = window.__resumeRender;
+const resultsDiv = document.getElementById("results");
+document.getElementById("compare-btn").addEventListener("click", () => {
+  const jdId  = document.getElementById("jd-select").value;
+  const cvIds = [...document.getElementById("cv-select").selectedOptions].map(o => o.value);
+  if (!jdId || !cvIds.length) { alert("Select a JD and at least one CV."); return; }
+
+  const welcome = resultsDiv.querySelector(".default-text");
+  if (welcome) welcome.remove();
+
+  const loading = document.createElement("div");
+  loading.className = "chat incoming typing-message";
+  loading.innerHTML = `<div class="chat-avatar"><i class="fa fa-briefcase"></i></div>
+    <div class="chat-content"><div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div></div>`;
+  resultsDiv.appendChild(loading);
+  resultsDiv.scrollTop = resultsDiv.scrollHeight;
+
+  fetch(AJAX_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded", "X-CSRFToken": CSRF_TOKEN },
+    body: new URLSearchParams({ jd_id: jdId, cv_ids: cvIds.join(",") }),
+  })
+    .then(r => r.json())
+    .then(d => {
+      loading.remove();
+      const text = d.result || d.error || "No result.";
+      const bubble = document.createElement("div");
+      bubble.className = "chat incoming";
+      let html = text;
+      if (window.marked && window.DOMPurify) {
+        marked.setOptions({ breaks: true, gfm: true });
+        html = DOMPurify.sanitize(marked.parse(text));
+      }
+      bubble.innerHTML = `<div class="chat-avatar"><i class="fa fa-briefcase"></i></div>
+        <div class="chat-content"><div class="chat-details ai-markdown">${html}</div></div>`;
+      resultsDiv.appendChild(bubble);
+      if (window.hljs) bubble.querySelectorAll("pre code").forEach(b => hljs.highlightElement(b));
+      resultsDiv.scrollTop = resultsDiv.scrollHeight;
+    })
+    .catch(() => {
+      loading.remove();
+      resultsDiv.insertAdjacentHTML("beforeend",
+        `<div class="chat incoming"><div class="chat-avatar"><i class="fa fa-briefcase"></i></div>
+         <div class="chat-content"><p style="color:#f87171">Error connecting to server.</p></div></div>`);
+    });
+});
+</script>
 {% endblock %}

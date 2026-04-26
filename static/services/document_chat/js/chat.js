@@ -1,113 +1,91 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const chatCont = document.getElementById("chat-container");
-    const input = document.getElementById("chat-input");
-    const sendBtn = document.getElementById("send-btn");
-    const delBtn = document.getElementById("delete-btn");
+  const chatC   = document.getElementById("chat-container");
+  const input   = document.getElementById("chat-input");
+  const sendBtn = document.getElementById("send-btn");
+  const delBtn  = document.getElementById("delete-btn");
 
-    // Scroll to bottom initially if there are messages
-    if (chatCont) chatCont.scrollTop = chatCont.scrollHeight;
+  if (!chatC) return;
 
-    const render = (html) => {
-        chatCont.insertAdjacentHTML("beforeend", html);
-        chatCont.scrollTop = chatCont.scrollHeight;
-    };
+  const renderMd = (text) => {
+    if (!window.marked || !window.DOMPurify) return `<p>${text.replace(/\n/g, "<br>")}</p>`;
+    marked.setOptions({ breaks: true, gfm: true });
+    return DOMPurify.sanitize(marked.parse(text || ""));
+  };
 
-    if (sendBtn) {
-        sendBtn.onclick = () => {
-            const txt = input.value.trim(); 
-            if (!txt || !SESSION_ID) return;
-            
-            input.value = ""; 
-            
-            // Remove the default text if it exists
-            const defaultText = chatCont.querySelector('.default-text');
-            if (defaultText) defaultText.remove();
-            
-            render(`
-                <div class="chat outgoing">
-                    <div class="chat-content">
-                        <p>${txt.replace(/\n/g, '<br>')}</p>
-                    </div>
-                </div>
-            `);
-            
-            render(`
-                <div class="chat incoming loading-msg">
-                    <div class="chat-content">
-                        <p>...</p>
-                    </div>
-                </div>
-            `);
-            
-            fetch(AJAX_URL, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded",
-                    "X-CSRFToken": CSRF_TOKEN
-                },
-                body: new URLSearchParams({session_id: SESSION_ID, message: txt})
-            })
-            .then(r => r.json())
-            .then(d => {
-                const loadingMsg = document.querySelector(".chat.incoming.loading-msg");
-                if (loadingMsg) loadingMsg.remove();
-                
-                const responseText = d.bot_response || d.error || "Unknown error occurred.";
-                // Simple markdown-to-html line breaks
-                const formattedResponse = responseText.replace(/\n/g, '<br>');
-                
-                render(`
-                    <div class="chat incoming">
-                        <div class="chat-content">
-                            <p>${formattedResponse}</p>
-                        </div>
-                    </div>
-                `);
-            })
-            .catch(err => {
-                const loadingMsg = document.querySelector(".chat.incoming.loading-msg");
-                if (loadingMsg) loadingMsg.remove();
-                
-                render(`
-                    <div class="chat incoming">
-                        <div class="chat-content" style="background: rgba(239, 68, 68, 0.2); color: #ef4444;">
-                            <p>Failed to connect to the server.</p>
-                        </div>
-                    </div>
-                `);
-            });
-        };
+  const scroll = () => { chatC.scrollTop = chatC.scrollHeight; };
+
+  const addBubble = (content, type, isTyping) => {
+    const div = document.createElement("div");
+    div.className = `chat ${type}${isTyping ? " typing-message" : ""}`;
+    if (type === "incoming") {
+      div.innerHTML = `
+        <div class="chat-avatar"><i class="fa fa-file-text"></i></div>
+        <div class="chat-content"><div class="chat-details ai-markdown">${content}</div></div>`;
+      if (!isTyping && window.hljs) {
+        div.querySelectorAll("pre code").forEach(b => hljs.highlightElement(b));
+      }
+    } else {
+      div.innerHTML = `<div class="chat-content"><div class="chat-details"><p>${content.replace(/</g,"&lt;")}</p></div></div>`;
     }
+    const welcome = chatC.querySelector(".default-text");
+    if (welcome) welcome.remove();
+    chatC.appendChild(div);
+    scroll();
+    return div;
+  };
 
-    // Allow pressing Enter to send
-    if (input) {
-        input.addEventListener("keypress", function(event) {
-            if (event.key === "Enter" && !event.shiftKey) {
-                event.preventDefault();
-                sendBtn.click();
-            }
-        });
-    }
+  // Apply markdown to existing bot messages on page load
+  chatC.querySelectorAll(".ai-markdown").forEach(node => {
+    const raw = node.textContent;
+    node.innerHTML = renderMd(raw);
+    if (window.hljs) node.querySelectorAll("pre code").forEach(b => hljs.highlightElement(b));
+  });
 
-    if (delBtn) {
-        delBtn.onclick = () => {
-            if (!SESSION_ID || !confirm("Clear all chat history for this document?")) return;
-            fetch(AJAX_URL, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded",
-                    "X-CSRFToken": CSRF_TOKEN
-                },
-                body: new URLSearchParams({session_id: SESSION_ID, action: "clear_history"})
-            })
-            .then(() => {
-                chatCont.innerHTML = `
-                    <div class="default-text" style="text-align: center; margin-top: auto; margin-bottom: auto; color: var(--text-secondary);">
-                        <h2>Chat Cleared</h2>
-                        <p>History has been erased. You can start over.</p>
-                    </div>
-                `;
-            });
-        };
-    }
+  const send = () => {
+    const txt = input.value.trim();
+    if (!txt || !SESSION_ID) return;
+    input.value = "";
+    addBubble(txt, "outgoing");
+    const typing = addBubble(
+      `<div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`,
+      "incoming", true
+    );
+
+    fetch(AJAX_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded", "X-CSRFToken": CSRF_TOKEN },
+      body: new URLSearchParams({ session_id: SESSION_ID, message: txt }),
+    })
+      .then(r => r.json())
+      .then(d => {
+        typing.remove();
+        addBubble(renderMd(d.bot_response || d.error || "No response."), "incoming");
+      })
+      .catch(() => {
+        typing.remove();
+        addBubble("<p style='color:#f87171'>Connection error. Try again.</p>", "incoming");
+      });
+  };
+
+  if (sendBtn) sendBtn.addEventListener("click", send);
+  if (input) input.addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } });
+
+  if (delBtn) {
+    delBtn.addEventListener("click", () => {
+      if (!SESSION_ID || !confirm("Clear document chat history?")) return;
+      fetch(AJAX_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded", "X-CSRFToken": CSRF_TOKEN },
+        body: new URLSearchParams({ session_id: SESSION_ID, action: "clear_history" }),
+      }).then(() => {
+        chatC.innerHTML = `
+          <div class="default-text">
+            <div class="welcome-icon"><i class="fa fa-file-text"></i></div>
+            <h2>History cleared</h2><p>Ask a new question about this document.</p>
+          </div>`;
+      });
+    });
+  }
+
+  scroll();
 });

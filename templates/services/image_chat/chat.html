@@ -11,30 +11,28 @@
 <div class="image-chat-layout">
   <aside class="image-chat-panel">
     <section class="settings-card">
-      <h2>Image Source</h2>
+      <h2>Upload Image</h2>
       <form method="post" enctype="multipart/form-data" class="material-form">
         {% csrf_token %}
-        <label>
-          Upload Image
-          {{ form.image }}
-        </label>
-        <button type="submit"><i class="fa fa-upload"></i> Upload</button>
+        <label>Choose file {{ form.image }}</label>
+        <button type="submit"><i class="fa fa-upload"></i> Upload &amp; Preview</button>
       </form>
+    </section>
 
+    <section class="settings-card">
+      <h2>Select Image</h2>
       <div class="material-form">
         <label>
-          Selected Image
+          Your uploads
           <select id="img-select">
-            <option value="">Select image…</option>
+            <option value="">— choose an image —</option>
             {% for u in uploads %}
               <option
                 value="{{ u.id }}"
                 data-url="{{ u.image.url }}"
                 data-name="{{ u.image.name }}"
                 {% if selected_image_id == u.id|stringformat:"s" %}selected{% endif %}
-              >
-                {{ u.image.name }}
-              </option>
+              >{{ u.image.name|truncatechars:40 }}</option>
             {% endfor %}
           </select>
         </label>
@@ -44,30 +42,46 @@
     <section class="image-preview-card" id="image-preview-card">
       <div class="image-preview-empty" id="image-preview-empty">
         <i class="fa fa-image"></i>
-        <p>Select an uploaded image to preview it here.</p>
+        <p>Select an image to preview</p>
       </div>
-      <img id="image-preview" alt="Selected upload preview" hidden>
+      <img id="image-preview" alt="Selected image preview" style="display:none;width:100%;max-height:360px;object-fit:contain;border-radius:0.5rem 0.5rem 0 0">
       <div class="image-preview-meta" id="image-preview-meta" hidden></div>
     </section>
   </aside>
 
   <section class="image-chat-main">
     <div class="chat-container" id="image-chat-container">
-      <div class="default-text"><h2>Select an image to start.</h2></div>
+      <div class="default-text">
+        <div class="welcome-icon"><i class="fa fa-image"></i></div>
+        <h2>Select an image to start</h2>
+        <p>Upload or choose a previously uploaded image, then ask anything about it.</p>
+      </div>
     </div>
+
     <div class="typing-container">
+      <!-- Image-specific suggestion tags -->
+      <div class="suggestion-tags" id="img-suggestions" style="display:none">
+        <button class="tag-chip" data-prompt="Describe everything you see in this image in detail">Describe image</button>
+        <button class="tag-chip" data-prompt="What text or words appear in this image?">Read text</button>
+        <button class="tag-chip" data-prompt="What is the main subject or focus of this image?">Main subject</button>
+        <button class="tag-chip" data-prompt="What colors and visual style are used?">Colors &amp; style</button>
+        <button class="tag-chip" data-prompt="What mood or emotion does this image convey?">Mood</button>
+        <button class="tag-chip" data-prompt="Suggest improvements or alternative compositions for this image">Improve it</button>
+        <button class="tag-chip" data-prompt="Write an alt-text description for this image for accessibility">Alt text</button>
+      </div>
       <div class="input-group material-input-group">
-        <textarea id="chat-input" placeholder="Ask about the selected image…"></textarea>
+        <textarea id="chat-input" placeholder="Ask anything about this image…" rows="1"></textarea>
         <button id="send-btn" title="Send"><i class="fa fa-paper-plane"></i></button>
-        <button id="delete-btn" title="Clear"><i class="fa fa-trash"></i></button>
+        <button id="delete-btn" title="Clear history"><i class="fa fa-trash"></i></button>
       </div>
     </div>
   </section>
 </div>
 
 <script>
-  const AJAX_URL="{% url 'image_chat:ajax' %}", CSRF_TOKEN="{{ csrf_token }}";
-  const SELECTED_IMAGE_ID="{{ selected_image_id }}";
+  const AJAX_URL = "{% url 'image_chat:ajax' %}";
+  const CSRF_TOKEN = "{{ csrf_token }}";
+  const SELECTED_IMAGE_ID = "{{ selected_image_id }}";
 </script>
 <script src="{% static 'services/image_chat/js/chat.js' %}"></script>
 {% endblock %}

@@ -1,29 +1,101 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Image Generator{% endblock %}
+{% block title %}Image Generator | MyAIApp{% endblock %}
 
 {% block main_content %}
+<div class="dashboard-header compact-header">
   <h1>Image Generator</h1>
-  <div class="input-group">
-    <textarea id="prompt-input" placeholder="Enter image prompt…" required></textarea>
-    <button id="gen-btn"><i class="fa fa-image"></i></button>
-  </div>
-  <div id="images-grid">
-    {% for img in images %}
-      <div class="generated-image">
-        <img src="{{ img.image_url }}" alt="{{ img.prompt }}">
-        <p>{{ img.prompt }}</p>
+  <p>Describe what you want to see and the AI will generate it for you.</p>
+</div>
+
+<div class="image-chat-layout">
+  <!-- Left panel: prompt input -->
+  <aside class="image-chat-panel">
+    <section class="settings-card" style="gap:0.85rem">
+      <h2><i class="fa fa-wand-magic-sparkles" style="color:var(--accent)"></i> Generate Image</h2>
+      <label style="color:var(--text-secondary);font-size:0.85rem;display:grid;gap:0.4rem">
+        Your prompt
+        <textarea id="prompt-input" rows="5" placeholder="A futuristic city at sunset, cyberpunk style, ultra-detailed, 4K…" style="resize:vertical"></textarea>
+      </label>
+      <button id="gen-btn" style="width:100%;font-size:0.95rem">
+        <i class="fa fa-image"></i> Generate
+      </button>
+      <div id="gen-status" style="display:none;text-align:center;color:var(--text-secondary);font-size:0.85rem">
+        <i class="fa fa-circle-notch fa-spin"></i> Generating…
       </div>
-    {% endfor %}
-  </div>
-  <input type="hidden" id="session-id" value="{{ session.id }}">
+    </section>
+
+    <section class="settings-card" style="gap:0.5rem">
+      <h2 style="font-size:0.85rem">✨ Prompt Ideas</h2>
+      <div style="display:flex;flex-direction:column;gap:0.35rem">
+        <button class="prompt-idea-btn" data-prompt="A serene Japanese garden with cherry blossoms, photorealistic, golden hour lighting">🌸 Japanese garden</button>
+        <button class="prompt-idea-btn" data-prompt="Futuristic cyberpunk city at night with neon lights, rain reflections, ultra-detailed">🌆 Cyberpunk city</button>
+        <button class="prompt-idea-btn" data-prompt="A majestic dragon flying over snow-capped mountains, fantasy art, dramatic lighting">🐉 Fantasy dragon</button>
+        <button class="prompt-idea-btn" data-prompt="Abstract digital art with flowing geometric shapes, vibrant colors, modern design">🎨 Abstract art</button>
+        <button class="prompt-idea-btn" data-prompt="Cozy coffee shop interior, warm lighting, autumn vibes, watercolor illustration">☕ Cozy café</button>
+        <button class="prompt-idea-btn" data-prompt="Deep space nebula with colorful gas clouds, stars, and a distant galaxy, NASA style">🌌 Space nebula</button>
+        <button class="prompt-idea-btn" data-prompt="Portrait of a wise old wizard with glowing blue eyes, detailed fantasy illustration">🧙 Fantasy portrait</button>
+      </div>
+    </section>
+  </aside>
+
+  <!-- Right panel: generated images -->
+  <section class="image-chat-main" style="display:flex;flex-direction:column;gap:0.75rem;overflow-y:auto">
+    {% if not images %}
+      <div class="chat-container" style="flex:1">
+        <div class="default-text">
+          <div class="welcome-icon"><i class="fa fa-wand-magic-sparkles"></i></div>
+          <h2>Image Generator</h2>
+          <p>Write a detailed description and let the AI create a unique image for you.</p>
+          <div class="welcome-chips">
+            <span class="tag-chip" style="cursor:default">AI-powered</span>
+            <span class="tag-chip" style="cursor:default">Any style</span>
+            <span class="tag-chip" style="cursor:default">Instant creation</span>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- New generation result (inserted by JS) -->
+    <div id="new-image-area"></div>
+
+    <!-- Previous generations -->
+    {% if images %}
+    <div style="display:grid;gap:0.75rem">
+      <h3 style="font-size:0.85rem;color:var(--text-secondary);border-bottom:1px solid var(--glass-border);padding-bottom:0.4rem">Previous Generations</h3>
+      <div id="images-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:0.75rem">
+        {% for img in images %}
+          <div class="generated-image" style="border-radius:0.6rem;overflow:hidden;background:var(--card-bg);border:1px solid var(--glass-border)">
+            <img src="{{ img.image_url }}" alt="{{ img.prompt }}" style="width:100%;aspect-ratio:1;object-fit:cover;display:block"
+                 onerror="this.style.display='none'">
+            <div style="padding:0.6rem 0.75rem">
+              <p style="font-size:0.78rem;color:var(--text-secondary);margin:0;line-height:1.4">{{ img.prompt|truncatechars:80 }}</p>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </section>
+</div>
+
+<input type="hidden" id="session-id" value="{{ session.id }}">
 {% endblock %}
 
 {% block extra_js %}
-  <script>
-    const SESSION_ID="{{ session.id }}",
-          CSRF_TOKEN="{{ csrf_token }}";
-  </script>
-  <script src="{% static 'services/image_generator/js/generator.js' %}"></script>
+<script>
+  const SESSION_ID = "{{ session.id }}";
+  const CSRF_TOKEN = "{{ csrf_token }}";
+</script>
+<script src="{% static 'services/image_generator/js/generator.js' %}"></script>
+<script>
+// Prompt idea buttons
+document.querySelectorAll(".prompt-idea-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const el = document.getElementById("prompt-input");
+    if (el) { el.value = btn.dataset.prompt; el.focus(); }
+  });
+});
+</script>
 {% endblock %}

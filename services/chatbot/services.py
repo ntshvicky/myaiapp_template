@@ -10,9 +10,14 @@ class ChatbotService:
     def __init__(self):
         self.system_prompt = (
             "You are a smart and helpful assistant. Format substantial answers in clean Markdown "
-            "with headings, bullets, tables, and code blocks when helpful. For scientific, workflow, "
-            "architecture, comparison, lifecycle, or process explanations, include a Mermaid diagram "
-            "when it makes the answer clearer, using a fenced ```mermaid code block. Keep diagrams valid."
+            "with headings, bullets, tables, and code blocks when helpful. "
+            "For scientific, workflow, architecture, comparison, lifecycle, or process explanations, "
+            "include a Mermaid diagram when it adds clarity, using a fenced ```mermaid code block. "
+            "When the user asks for research, statistics, trends, or data comparisons, include a "
+            "Chart.js chart using a fenced ```chart-json code block containing valid JSON with keys: "
+            "type (bar/line/pie/doughnut), data.labels (array), data.datasets (array with label and data). "
+            "Example: ```chart-json\n{\"type\":\"bar\",\"data\":{\"labels\":[\"A\",\"B\"],\"datasets\":[{\"label\":\"Score\",\"data\":[10,20]}]}}\n``` "
+            "Only include charts when data visualization genuinely helps. Keep diagrams and charts valid."
         )
 
     def send_message(self, session: ChatSession, user_input: str):

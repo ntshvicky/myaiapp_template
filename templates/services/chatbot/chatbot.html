@@ -3,19 +3,18 @@
 
 {% block title %}AI Chatbot{% endblock %}
 
-{% block extra_css %}
-<!-- If you have any page-specific CSS, link it here -->
-{% endblock %}
-
 {% block main_content %}
   <div class="chat-shell">
     <aside class="conversation-panel">
-      <a class="btn-subscribe" href="{% url 'chatbot:chatbot' %}?new=1"><i class="fa fa-plus"></i> New Chat</a>
+      <a class="btn-new-chat" href="{% url 'chatbot:chatbot' %}?new=1"><i class="fa fa-plus"></i> New Chat</a>
       <div class="conversation-list">
         {% for item in sessions %}
           <a class="conversation-link {% if item.id == session.id %}active{% endif %}" href="{% url 'chatbot:chatbot' %}?session_id={{ item.id }}">
-            <span>{{ item.title }}</span>
-            <small>{{ item.provider }} · {{ item.model_name }}</small>
+            <span class="conv-title">{{ item.title }}</span>
+            <small class="conv-meta">
+              <span class="provider-badge provider-{{ item.provider }}">{{ item.provider }}</span>
+              {{ item.model_name }}
+            </small>
           </a>
         {% empty %}
           <p class="muted">No conversations yet.</p>
@@ -25,9 +24,12 @@
 
     <section class="chat-main">
       <div class="chat-toolbar">
-        <div>
-          <h1>{{ session.title }}</h1>
-          <p>{{ token_totals.total_tokens|default:0 }} total tokens in this conversation</p>
+        <div class="chat-toolbar-info">
+          <h1 class="chat-title">{{ session.title }}</h1>
+          <p class="token-counter" id="token-counter">
+            <i class="fa fa-circle-dot"></i>
+            <span id="token-count">{{ token_totals.total_tokens|default:0 }}</span> tokens used
+          </p>
         </div>
         <div class="model-controls">
           <select id="provider-select">
@@ -35,49 +37,64 @@
               <option value="{{ value }}" {% if session.provider == value %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
           </select>
-          <input id="model-name" value="{{ session.model_name }}" placeholder="Model name">
+          <select id="model-select">
+            {% comment %}Options populated by JS{% endcomment %}
+          </select>
         </div>
       </div>
 
-  <div class="chat-container">
-    {% if not messages %}
-      <div class="default-text">
-        <h1>AI Chatbot</h1>
-        <p>Start a conversation below.</p>
-      </div>
-    {% endif %}
-    {% for msg in messages %}
-      {% if msg.sender == "user" %}
-        <div class="chat outgoing">
-          <div class="chat-content">
-            <div class="chat-details">
-              <p>{{ msg.content }}</p>
+      <div class="chat-container" id="chat-container">
+        {% if not chat_messages %}
+          <div class="default-text" id="default-welcome">
+            <div class="welcome-icon"><i class="fa fa-robot"></i></div>
+            <h2>AI Chatbot</h2>
+            <p>Ask me anything — I can research, explain, compare, write code, create diagrams, and more.</p>
+            <div class="welcome-chips">
+              <button class="tag-chip" data-prompt="Explain quantum computing in simple terms">Explain a concept</button>
+              <button class="tag-chip" data-prompt="Research the latest trends in artificial intelligence with data">Research a topic</button>
+              <button class="tag-chip" data-prompt="Write a Python function that sorts a list of dictionaries by key">Write code</button>
+              <button class="tag-chip" data-prompt="Create a diagram showing how HTTP requests work">Make a diagram</button>
             </div>
           </div>
-        </div>
-      {% else %}
-        <div class="chat incoming">
-          <div class="chat-content">
-            <div class="chat-details ai-markdown">
-              {{ msg.content|linebreaksbr }}
+        {% endif %}
+        {% for msg in chat_messages %}
+          {% if msg.sender == "user" %}
+            <div class="chat outgoing">
+              <div class="chat-content">
+                <div class="chat-details">
+                  <p>{{ msg.content }}</p>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      {% endif %}
-    {% endfor %}
-  </div>
-
-  <div class="typing-container">
-    <div class="typing-content">
-      <div class="input-group">
-        <textarea id="chat-input" placeholder="Type your message…" required></textarea>
-        <button id="send-btn"><i class="fa fa-paper-plane"></i></button>
-        <button id="delete-btn"><i class="fa fa-trash"></i></button>
+          {% else %}
+            <div class="chat incoming">
+              <div class="chat-avatar"><i class="fa fa-robot"></i></div>
+              <div class="chat-content">
+                <div class="chat-details ai-markdown">{{ msg.content }}</div>
+              </div>
+            </div>
+          {% endif %}
+        {% endfor %}
       </div>
-    </div>
-  </div>
 
-  <input type="hidden" id="session-id" value="{{ session.id }}">
+      <div class="typing-container">
+        <div class="suggestion-tags" id="suggestion-tags">
+          <button class="tag-chip" data-prompt="Explain this in more detail">Explain more</button>
+          <button class="tag-chip" data-prompt="Summarize the key points as bullet points">Summarize</button>
+          <button class="tag-chip" data-prompt="Give me a real-world example">Example</button>
+          <button class="tag-chip" data-prompt="Show me a comparison table">Compare</button>
+          <button class="tag-chip" data-prompt="Research this topic with data and visualizations">Research + Charts</button>
+          <button class="tag-chip" data-prompt="Write production-ready code for this">Write Code</button>
+          <button class="tag-chip" data-prompt="Create a Mermaid diagram for this">Diagram</button>
+        </div>
+        <div class="input-group">
+          <textarea id="chat-input" placeholder="Ask anything…" rows="1"></textarea>
+          <button id="send-btn" title="Send"><i class="fa fa-paper-plane"></i></button>
+          <button id="delete-btn" title="Clear chat"><i class="fa fa-trash"></i></button>
+        </div>
+      </div>
+
+      <input type="hidden" id="session-id" value="{{ session.id }}">
     </section>
   </div>
 {% endblock %}
@@ -86,6 +103,8 @@
   <script>
     const SESSION_ID = document.getElementById("session-id").value;
     const CSRF_TOKEN = "{{ csrf_token }}";
+    const SESSION_PROVIDER = "{{ session.provider }}";
+    const SESSION_MODEL = "{{ session.model_name }}";
   </script>
   <script src="{% static 'services/chatbot/js/chatbot.js' %}"></script>
 {% endblock %}

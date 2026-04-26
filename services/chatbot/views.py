@@ -22,7 +22,7 @@ class ChatbotView(FeatureAccessMixin, View):
         session = sessions.filter(id=session_id).first() if session_id else sessions.first()
         if not session:
             session = self._create_session(request)
-        messages = session.messages.order_by("timestamp")
+        chat_messages = session.messages.order_by("timestamp")
         token_totals = session.messages.aggregate(
             input_tokens=Sum("input_tokens"),
             output_tokens=Sum("output_tokens"),
@@ -31,7 +31,7 @@ class ChatbotView(FeatureAccessMixin, View):
         return render(request, self.template_name, {
             "session": session,
             "sessions": sessions,
-            "messages": messages,
+            "chat_messages": chat_messages,
             "provider_choices": UserProfile.AI_PROVIDER_CHOICES,
             "default_models": DEFAULT_MODELS,
             "token_totals": token_totals,

@@ -1,42 +1,81 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Webpage Analysis{% endblock %}
+{% block title %}Website Analyzer{% endblock %}
 
 {% block main_content %}
-  <div class="chat-container">
-    {% if not messages %}
-      <div class="default-text">
-        <h1>Webpage Analysis</h1>
-        <p>Enter “URL::Your question” to start.</p>
+<div class="dashboard-header compact-header">
+  <h1>Website Analyzer</h1>
+  <p>Enter a URL and ask the AI to analyze, summarize, or extract data from any webpage.</p>
+</div>
+
+<div class="chat-main" style="display:flex;flex-direction:column;gap:0.75rem;height:calc(100vh - 10rem)">
+
+  <div class="chat-container" id="chat-container">
+    {% if not chat_messages %}
+      <div class="default-text" id="default-welcome">
+        <div class="welcome-icon"><i class="fa fa-globe"></i></div>
+        <h2>Website Analyzer</h2>
+        <p>Type a URL followed by <code>::</code> and your question.<br>
+           Example: <em>https://example.com :: Summarize this page</em></p>
       </div>
     {% endif %}
-    {% for msg in messages %}
+    {% for msg in chat_messages %}
       {% if msg.sender == "user" %}
-        <div class="chat outgoing"><div class="chat-content"><div class="chat-details"><p>{{ msg.content }}</p></div></div></div>
+        <div class="chat outgoing">
+          <div class="chat-content"><div class="chat-details"><p>{{ msg.content }}</p></div></div>
+        </div>
       {% else %}
-        <div class="chat incoming"><div class="chat-content"><div class="chat-details"><p>{{ msg.content }}</p></div></div></div>
+        <div class="chat incoming">
+          <div class="chat-avatar"><i class="fa fa-globe"></i></div>
+          <div class="chat-content">
+            <div class="chat-details ai-markdown">{{ msg.content }}</div>
+          </div>
+        </div>
       {% endif %}
     {% endfor %}
   </div>
 
   <div class="typing-container">
-    <div class="typing-content">
-      <div class="input-group">
-        <textarea id="chat-input" placeholder="Enter URL::question…" required></textarea>
-        <button id="send-btn"><i class="fa fa-paper-plane"></i></button>
-        <button id="delete-btn"><i class="fa fa-trash"></i></button>
-      </div>
+    <div class="suggestion-tags">
+      <button class="tag-chip" data-prompt="https://example.com :: Summarize the main content of this page">Summarize page</button>
+      <button class="tag-chip" data-prompt="https://example.com :: Extract all key facts and data points">Extract facts</button>
+      <button class="tag-chip" data-prompt="https://example.com :: What is the SEO score and what can be improved?">SEO analysis</button>
+      <button class="tag-chip" data-prompt="https://example.com :: List all products or services mentioned">Products/Services</button>
+      <button class="tag-chip" data-prompt="https://example.com :: What is the tone and target audience of this page?">Tone &amp; audience</button>
+      <button class="tag-chip" data-prompt="https://example.com :: Extract contact information and links">Contact info</button>
+    </div>
+    <div class="input-group">
+      <textarea id="chat-input" placeholder="https://example.com :: your question…" rows="1"></textarea>
+      <button id="send-btn"><i class="fa fa-paper-plane"></i></button>
+      <button id="delete-btn"><i class="fa fa-trash"></i></button>
     </div>
   </div>
 
-  <input type="hidden" id="session-id" value="{{ session.id }}">
+</div>
+
+<input type="hidden" id="session-id" value="{{ session.id }}">
 {% endblock %}
 
 {% block extra_js %}
-  <script>
-    const SESSION_ID = "{{ session.id }}",
-          CSRF_TOKEN = "{{ csrf_token }}";
-  </script>
-  <script src="{% static 'services/webpage_analysis/js/analysis.js' %}"></script>
+<script>
+  const SESSION_ID = "{{ session.id }}";
+  const CSRF_TOKEN = "{{ csrf_token }}";
+</script>
+<script src="{% static 'services/webpage_analysis/js/analysis.js' %}"></script>
+<script>
+// Apply markdown to existing bot messages
+document.querySelectorAll(".ai-markdown").forEach(node => {
+  if (!window.marked || !window.DOMPurify) return;
+  marked.setOptions({ breaks: true, gfm: true });
+  node.innerHTML = DOMPurify.sanitize(marked.parse(node.textContent || ""));
+});
+// Suggestion chip → fill input
+document.querySelectorAll(".tag-chip").forEach(chip => {
+  chip.addEventListener("click", () => {
+    document.getElementById("chat-input").value = chip.dataset.prompt || chip.textContent.trim();
+    document.getElementById("chat-input").focus();
+  });
+});
+</script>
 {% endblock %}
