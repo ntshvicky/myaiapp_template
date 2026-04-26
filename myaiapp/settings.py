@@ -135,10 +135,15 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# WhiteNoise — compress and cache-bust static files in production
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# WhiteNoise — serve static files in production without collectstatic
+_IS_VERCEL = bool(os.environ.get("VERCEL"))
+if _IS_VERCEL:
+    # Use finders so WhiteNoise serves from STATICFILES_DIRS directly
+    WHITENOISE_USE_FINDERS = True
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+else:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files: use /tmp on Vercel (serverless FS is read-only), local otherwise
-_IS_VERCEL = bool(os.environ.get("VERCEL"))
 MEDIA_URL = '/media/'
 MEDIA_ROOT = Path("/tmp/media") if _IS_VERCEL else BASE_DIR / 'media'
