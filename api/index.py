@@ -4,7 +4,8 @@ import sys
 # Ensure the project root is on the path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "myaiapp.settings")
+# Always force-set the correct settings module (strip any stray whitespace from env)
+os.environ["DJANGO_SETTINGS_MODULE"] = "myaiapp.settings"
 
 # Run migrations automatically on cold start (important for SQLite in /tmp on Vercel)
 try:
