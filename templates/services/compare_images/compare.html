@@ -1,21 +1,140 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Compare Images{% endblock %}
-{% block main_content %}
-  <h1>Compare Two Images</h1>
-  <form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Compare</button>
-  </form>
+{% block title %}Compare Images | MyAIApp{% endblock %}
 
-  {% if result %}
-    <h2>Score: {{ result.score }}</h2>
-    <p>{{ result.score|floatformat:2 }} similarity, where 1.00 means visually identical after normalization.</p>
+{% block main_content %}
+<div class="dashboard-header compact-header">
+  <h1>Compare Images</h1>
+  <p>Upload two images and the AI will measure their visual similarity and highlight differences.</p>
+</div>
+
+<div class="image-chat-layout">
+  <!-- Upload panel -->
+  <aside class="image-chat-panel">
+    <section class="settings-card" style="gap:0.85rem">
+      <h2><i class="fa fa-images" style="color:var(--accent)"></i> Upload Images</h2>
+      <form method="post" enctype="multipart/form-data" class="material-form" style="gap:0.75rem">
+        {% csrf_token %}
+        <label>
+          Image A
+          <input type="file" name="image1" accept="image/*" required id="img1-input">
+        </label>
+        <div id="img1-preview-wrap" style="display:none">
+          <img id="img1-preview" style="width:100%;max-height:160px;object-fit:cover;border-radius:0.4rem;border:1px solid var(--glass-border)">
+        </div>
+        <label>
+          Image B
+          <input type="file" name="image2" accept="image/*" required id="img2-input">
+        </label>
+        <div id="img2-preview-wrap" style="display:none">
+          <img id="img2-preview" style="width:100%;max-height:160px;object-fit:cover;border-radius:0.4rem;border:1px solid var(--glass-border)">
+        </div>
+        <button type="submit" style="width:100%">
+          <i class="fa fa-magnifying-glass"></i> Compare Now
+        </button>
+      </form>
+    </section>
+
+    <section class="settings-card" style="gap:0.5rem">
+      <h2 style="font-size:0.85rem">💡 Use cases</h2>
+      <div style="display:grid;gap:0.3rem;font-size:0.82rem;color:var(--text-secondary)">
+        <div><i class="fa fa-check-circle" style="color:var(--accent)"></i> Check if images are duplicates</div>
+        <div><i class="fa fa-check-circle" style="color:var(--accent)"></i> Compare product photo versions</div>
+        <div><i class="fa fa-check-circle" style="color:var(--accent)"></i> Detect watermark differences</div>
+        <div><i class="fa fa-check-circle" style="color:var(--accent)"></i> Before / after comparison</div>
+        <div><i class="fa fa-check-circle" style="color:var(--accent)"></i> UI screenshot regression testing</div>
+        <div><i class="fa fa-check-circle" style="color:var(--accent)"></i> Art style similarity check</div>
+      </div>
+    </section>
+  </aside>
+
+  <!-- Results panel -->
+  <section class="image-chat-main">
+    {% if result %}
+    <!-- Score card -->
+    <div class="settings-card" style="gap:0.85rem">
+      <h2><i class="fa fa-chart-pie" style="color:var(--accent)"></i> Comparison Result</h2>
+      <div style="text-align:center;padding:0.75rem 0">
+        {% with score=result.score|floatformat:0 %}
+        <div style="font-size:3rem;font-weight:800;color:{% if result.score >= 90 %}#4ade80{% elif result.score >= 60 %}#fbbf24{% else %}#f87171{% endif %}">
+          {{ score }}%
+        </div>
+        {% endwith %}
+        <div style="font-size:0.9rem;color:var(--text-secondary);margin-top:0.25rem">
+          {% if result.score >= 90 %}
+            Very similar — likely the same image or minor edits
+          {% elif result.score >= 70 %}
+            Moderately similar — noticeable differences exist
+          {% elif result.score >= 40 %}
+            Low similarity — significantly different
+          {% else %}
+            Very different — distinct images
+          {% endif %}
+        </div>
+        <!-- Progress bar -->
+        <div style="background:var(--surface);border-radius:2rem;height:10px;margin:0.75rem auto;max-width:320px;overflow:hidden">
+          <div style="height:100%;border-radius:2rem;width:{{ result.score|floatformat:0 }}%;background:{% if result.score >= 90 %}#4ade80{% elif result.score >= 60 %}#fbbf24{% else %}#f87171{% endif %};transition:width 0.6s"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Side-by-side images -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-top:0.5rem">
+      <div class="settings-card" style="padding:0.75rem;gap:0.5rem">
+        <h3 style="font-size:0.82rem;color:var(--text-secondary);margin:0">Image A</h3>
+        <img src="{{ result.image1.url }}" alt="Image A"
+             style="width:100%;border-radius:0.4rem;object-fit:contain;max-height:280px;background:rgba(0,0,0,0.2)">
+      </div>
+      <div class="settings-card" style="padding:0.75rem;gap:0.5rem">
+        <h3 style="font-size:0.82rem;color:var(--text-secondary);margin:0">Image B</h3>
+        <img src="{{ result.image2.url }}" alt="Image B"
+             style="width:100%;border-radius:0.4rem;object-fit:contain;max-height:280px;background:rgba(0,0,0,0.2)">
+      </div>
+    </div>
+
     {% if result.diff_url %}
-    <p>Diff:</p>
-    <img src="{{ result.diff_url }}" alt="Diff">
+    <div class="settings-card" style="gap:0.5rem;margin-top:0.5rem">
+      <h3 style="font-size:0.85rem;color:var(--text-secondary);margin:0"><i class="fa fa-eye-dropper"></i> Difference Map</h3>
+      <img src="{{ result.diff_url }}" alt="Difference map"
+           style="width:100%;border-radius:0.4rem;max-height:300px;object-fit:contain;background:rgba(0,0,0,0.2)">
+    </div>
     {% endif %}
-  {% endif %}
+
+    {% else %}
+    <!-- No result yet: welcome state -->
+    <div class="chat-container" style="flex:1">
+      <div class="default-text">
+        <div class="welcome-icon"><i class="fa fa-images"></i></div>
+        <h2>Image Comparison</h2>
+        <p>Upload two images from the left panel to measure their visual similarity.</p>
+        <div class="welcome-chips">
+          <span class="tag-chip" style="cursor:default">Pixel-level analysis</span>
+          <span class="tag-chip" style="cursor:default">Similarity score</span>
+          <span class="tag-chip" style="cursor:default">Diff map</span>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </section>
+</div>
+
+<script>
+// Live preview for uploaded images
+function setupPreview(inputId, imgId, wrapId) {
+  const inp  = document.getElementById(inputId);
+  const img  = document.getElementById(imgId);
+  const wrap = document.getElementById(wrapId);
+  if (!inp) return;
+  inp.addEventListener("change", () => {
+    const file = inp.files[0];
+    if (!file) { wrap.style.display = "none"; return; }
+    const reader = new FileReader();
+    reader.onload = e => { img.src = e.target.result; wrap.style.display = "block"; };
+    reader.readAsDataURL(file);
+  });
+}
+setupPreview("img1-input", "img1-preview", "img1-preview-wrap");
+setupPreview("img2-input", "img2-preview", "img2-preview-wrap");
+</script>
 {% endblock %}

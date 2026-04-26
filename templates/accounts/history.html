@@ -4,23 +4,60 @@
 
 {% block content %}
 <div class="dashboard-header">
-    <h1>Conversation History</h1>
-    <p>Resume previous chats across your AI tools.</p>
+  <h1>Conversation History</h1>
+  <p>Resume previous chats across all your AI tools.</p>
 </div>
 
-<div class="history-list">
-    {% for item in conversations %}
-        <a class="history-row" href="{{ item.url }}">
-            <div>
-                <strong>{{ item.title }}</strong>
-                <p>{{ item.module }} · {{ item.message_count }} messages · {{ item.tokens }} tokens</p>
-            </div>
-            <span>{{ item.updated_at|date:"M d, Y H:i" }}</span>
-        </a>
-    {% empty %}
-        <div class="glass-card">
-            <p class="muted">No conversations yet. Start with the chatbot or upload a document/image.</p>
-        </div>
-    {% endfor %}
+<div class="history-filter-tabs" id="filter-tabs">
+  <button class="filter-tab active" data-module="all">All</button>
+  <button class="filter-tab" data-module="AI Chatbot"><i class="fa fa-comments"></i> Chatbot</button>
+  <button class="filter-tab" data-module="Image Chat"><i class="fa fa-image"></i> Image Chat</button>
+  <button class="filter-tab" data-module="Document Chat"><i class="fa fa-file-text"></i> Documents</button>
+  <button class="filter-tab" data-module="Website Analyzer"><i class="fa fa-globe"></i> Website</button>
 </div>
+
+<div class="history-list" id="history-list">
+  {% for item in conversations %}
+  <a class="history-row" href="{{ item.url }}" data-module="{{ item.module }}">
+    <div class="history-row-left">
+      <div class="history-module-icon">
+        {% if item.module == "AI Chatbot" %}<i class="fa fa-comments"></i>
+        {% elif item.module == "Image Chat" %}<i class="fa fa-image"></i>
+        {% elif item.module == "Document Chat" %}<i class="fa fa-file-text"></i>
+        {% elif item.module == "Website Analyzer" %}<i class="fa fa-globe"></i>
+        {% else %}<i class="fa fa-robot"></i>{% endif %}
+      </div>
+      <div class="history-text">
+        <strong>{{ item.title|truncatechars:60 }}</strong>
+        <div class="history-meta">
+          <span class="history-module-badge">{{ item.module }}</span>
+          <span>{{ item.message_count }} messages</span>
+          {% if item.tokens %}<span>· {{ item.tokens }} tokens</span>{% endif %}
+        </div>
+      </div>
+    </div>
+    <span style="color:var(--text-secondary);font-size:0.82rem;white-space:nowrap;flex-shrink:0">
+      {{ item.updated_at|date:"M d, Y" }}<br>
+      <span style="font-size:0.75rem">{{ item.updated_at|date:"H:i" }}</span>
+    </span>
+  </a>
+  {% empty %}
+  <div class="glass-card">
+    <p class="muted">No conversations yet. Start with the chatbot or upload a document/image.</p>
+  </div>
+  {% endfor %}
+</div>
+
+<script>
+document.querySelectorAll(".filter-tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".filter-tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    const module = tab.dataset.module;
+    document.querySelectorAll(".history-row").forEach(row => {
+      row.style.display = (module === "all" || row.dataset.module === module) ? "" : "none";
+    });
+  });
+});
+</script>
 {% endblock %}

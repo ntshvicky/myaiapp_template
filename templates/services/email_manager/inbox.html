@@ -1,26 +1,234 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Email Manager{% endblock %}
+{% block title %}Email Manager | MyAIApp{% endblock %}
+
 {% block main_content %}
+<div class="dashboard-header compact-header">
   <h1>Email Manager</h1>
-  <select id="acct-select">
-    <option value="">Select account…</option>
-    {% for a in accounts %}<option value="{{ a.id }}">{{ a.address }}</option>{% endfor %}
-  </select>
-  <input id="search-input" placeholder="Search inbox…">
-  <button id="search-btn">Search</button>
-  <ul id="results"></ul>
+  <p>Connect your email account and manage inbox, compose, search — all with AI assistance.</p>
+</div>
 
-  <h2>Compose</h2>
-  <input id="to" placeholder="To">
-  <input id="subject" placeholder="Subject">
-  <textarea id="body" placeholder="Body"></textarea>
-  <button id="send-btn">Send</button>
+{% if messages %}
+  {% for message in messages %}
+    <div class="flash-message {% if message.tags %}{{ message.tags }}{% else %}info{% endif %}" style="margin-bottom:0.75rem">{{ message }}</div>
+  {% endfor %}
+{% endif %}
 
-  <script>
-    const AJAX_URL="{% url 'email_manager:inbox' %}",
-          CSRF_TOKEN="{{ csrf_token }}";
-  </script>
-  <script src="{% static 'services/email_manager/js/inbox.js' %}"></script>
+{% if not accounts %}
+<!-- ─── No accounts: show setup form ─── -->
+<div style="max-width:640px;margin:0 auto">
+  <div class="settings-card" style="gap:1.25rem">
+    <div style="text-align:center;padding:1rem 0">
+      <i class="fa fa-envelope-open" style="font-size:2.5rem;color:var(--accent)"></i>
+      <h2 style="margin-top:0.75rem">Connect your Email</h2>
+      <p style="color:var(--text-secondary);font-size:0.9rem">Add your IMAP/SMTP credentials to access your inbox.</p>
+    </div>
+    <form method="post" class="material-form" style="gap:0.75rem">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="add_account">
+      <label>Display Name
+        <input type="text" name="display_name" placeholder="e.g. Work Gmail">
+      </label>
+      <label>Email Address *
+        <input type="email" name="email" required placeholder="you@gmail.com">
+      </label>
+      <label>Username (usually your full email) *
+        <input type="text" name="username" required placeholder="you@gmail.com">
+      </label>
+      <label>Password / App Password *
+        <input type="password" name="password" required placeholder="Gmail app password">
+      </label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+        <label>IMAP Host
+          <input type="text" name="imap_host" value="imap.gmail.com">
+        </label>
+        <label>IMAP Port
+          <input type="number" name="imap_port" value="993">
+        </label>
+        <label>SMTP Host
+          <input type="text" name="smtp_host" value="smtp.gmail.com">
+        </label>
+        <label>SMTP Port
+          <input type="number" name="smtp_port" value="587">
+        </label>
+      </div>
+      <div style="display:flex;gap:1.5rem">
+        <label style="flex-direction:row;align-items:center;gap:0.5rem;cursor:pointer">
+          <input type="hidden" name="imap_use_ssl" value="0">
+          <input type="checkbox" name="imap_use_ssl" value="1" checked style="width:auto"> IMAP SSL
+        </label>
+        <label style="flex-direction:row;align-items:center;gap:0.5rem;cursor:pointer">
+          <input type="hidden" name="smtp_use_tls" value="0">
+          <input type="checkbox" name="smtp_use_tls" value="1" checked style="width:auto"> SMTP TLS
+        </label>
+      </div>
+      <div style="background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.3);border-radius:0.5rem;padding:0.75rem;font-size:0.8rem;color:var(--text-secondary)">
+        <i class="fa fa-circle-info" style="color:#fbbf24"></i>
+        <strong>Gmail users:</strong> enable "Less secure apps" or create an <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color:var(--accent)">App Password</a> and use it here.
+      </div>
+      <button type="submit"><i class="fa fa-plug"></i> Connect &amp; Test</button>
+    </form>
+  </div>
+</div>
+
+{% else %}
+<!-- ─── Full email client layout ─── -->
+<div class="email-layout">
+
+  <!-- Sidebar -->
+  <aside class="email-sidebar">
+    <button class="compose-btn" id="compose-btn">
+      <i class="fa fa-pen-to-square"></i> Compose
+    </button>
+
+    {% if accounts|length > 1 %}
+    <select id="account-select" style="width:100%;font-size:0.82rem;margin-bottom:0.5rem">
+      {% for acc in accounts %}
+        <option value="{{ acc.id }}" {% if acc.id == account.id %}selected{% endif %}>{{ acc.email }}</option>
+      {% endfor %}
+    </select>
+    {% endif %}
+
+    <nav class="email-folder-list">
+      <p class="email-section-label">Folders</p>
+      {% for f in folders %}
+        <button class="email-folder-btn {% if f == folder %}active{% endif %}" data-folder="{{ f }}">
+          <i class="fa {% if f == 'INBOX' %}fa-inbox{% elif 'sent' in f|lower %}fa-paper-plane{% elif 'draft' in f|lower %}fa-file-pen{% elif 'trash' in f|lower or 'deleted' in f|lower %}fa-trash{% elif 'spam' in f|lower or 'junk' in f|lower %}fa-ban{% elif 'star' in f|lower %}fa-star{% else %}fa-folder{% endif %}"></i>
+          {{ f|truncatechars:22 }}
+        </button>
+      {% empty %}
+        <button class="email-folder-btn active" data-folder="INBOX"><i class="fa fa-inbox"></i> INBOX</button>
+        <button class="email-folder-btn" data-folder="Sent"><i class="fa fa-paper-plane"></i> Sent</button>
+        <button class="email-folder-btn" data-folder="Drafts"><i class="fa fa-file-pen"></i> Drafts</button>
+        <button class="email-folder-btn" data-folder="Trash"><i class="fa fa-trash"></i> Trash</button>
+      {% endfor %}
+    </nav>
+
+    <div class="email-accounts-footer">
+      <p class="email-section-label">Accounts</p>
+      {% for acc in accounts %}
+      <div class="email-account-row">
+        <i class="fa fa-circle" style="font-size:0.4rem;color:#4ade80;flex-shrink:0"></i>
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.8rem">{{ acc.email }}</span>
+        <form method="post" style="display:inline;flex-shrink:0">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="delete_account">
+          <input type="hidden" name="account_id" value="{{ acc.id }}">
+          <button type="submit" class="icon-btn danger-text" title="Remove"><i class="fa fa-xmark"></i></button>
+        </form>
+      </div>
+      {% endfor %}
+      <button id="add-account-btn" class="add-account-btn">
+        <i class="fa fa-plus"></i> Add Account
+      </button>
+    </div>
+  </aside>
+
+  <!-- Email list -->
+  <section class="email-list-panel">
+    <div class="email-search-bar">
+      <i class="fa fa-magnifying-glass" style="color:var(--text-secondary)"></i>
+      <input type="text" id="email-search" placeholder="Search emails…">
+      <button id="search-btn" class="btn-search"><i class="fa fa-magnifying-glass"></i> Search</button>
+    </div>
+    <div id="email-list" class="email-list-scroll">
+      <div class="email-list-loading" id="email-list-placeholder">
+        <i class="fa fa-circle-notch fa-spin"></i><p>Loading emails…</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Email detail -->
+  <section class="email-detail-panel">
+    <div class="email-detail-empty" id="email-detail-empty">
+      <i class="fa fa-envelope-open" style="font-size:2.2rem;color:var(--accent)"></i>
+      <p>Select an email to read it</p>
+      <div class="suggestion-tags" style="justify-content:center;margin-top:1rem">
+        <span class="tag-chip" style="cursor:default"><i class="fa fa-inbox"></i> Real-time IMAP</span>
+        <span class="tag-chip" style="cursor:default"><i class="fa fa-paper-plane"></i> SMTP sending</span>
+        <span class="tag-chip" style="cursor:default"><i class="fa fa-robot"></i> AI write &amp; summarize</span>
+        <span class="tag-chip" style="cursor:default"><i class="fa fa-magnifying-glass"></i> Smart search</span>
+      </div>
+    </div>
+
+    <div id="email-detail-view" style="display:none;flex-direction:column;height:100%;overflow:hidden">
+      <div class="email-detail-header">
+        <h3 id="detail-subject"></h3>
+        <div class="ai-action-pills">
+          <button class="ai-pill" data-task="summarize"><i class="fa fa-list"></i> Summarize</button>
+          <button class="ai-pill" data-task="reply"><i class="fa fa-reply"></i> Write Reply</button>
+          <button class="ai-pill" data-task="formal"><i class="fa fa-briefcase"></i> Make Formal</button>
+        </div>
+        <div class="email-meta">
+          <span><strong>From:</strong> <span id="detail-from"></span></span>
+          <span style="margin:0 0.5rem;color:var(--text-secondary)">·</span>
+          <span><strong>To:</strong> <span id="detail-to"></span></span>
+          <span style="margin:0 0.5rem;color:var(--text-secondary)">·</span>
+          <span id="detail-date" style="color:var(--text-secondary)"></span>
+        </div>
+      </div>
+      <div id="detail-body" class="email-body-content"></div>
+      <div id="ai-result-box" class="ai-result-box" style="display:none"></div>
+    </div>
+  </section>
+
+</div>
+
+<!-- Compose overlay -->
+<div id="compose-overlay" class="compose-overlay" style="display:none">
+  <div class="compose-header">
+    <strong><i class="fa fa-pen-to-square"></i> New Message</strong>
+    <div style="display:flex;gap:0.4rem;align-items:center">
+      <button class="ai-pill sm" data-compose-task="fix"><i class="fa fa-spell-check"></i> Fix</button>
+      <button class="ai-pill sm" data-compose-task="formal"><i class="fa fa-briefcase"></i> Formal</button>
+      <button class="ai-pill sm" data-compose-task="shorter"><i class="fa fa-scissors"></i> Shorter</button>
+      <button id="close-compose-btn" class="icon-btn"><i class="fa fa-xmark"></i></button>
+    </div>
+  </div>
+  <div class="compose-body">
+    <input id="compose-to"      placeholder="To" style="font-size:0.85rem">
+    <input id="compose-subject" placeholder="Subject" style="font-size:0.85rem">
+    <textarea id="compose-body" placeholder="Write your email…" rows="9" style="font-size:0.85rem;resize:vertical"></textarea>
+    <div id="compose-ai-result" style="display:none;font-size:0.82rem;background:var(--surface);border-radius:0.4rem;padding:0.6rem"></div>
+    <button id="send-email-btn" class="send-btn">
+      <i class="fa fa-paper-plane"></i> Send
+    </button>
+  </div>
+</div>
+
+<!-- Add account overlay -->
+<div id="add-account-overlay" class="modal-overlay" style="display:none">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3><i class="fa fa-envelope"></i> Add Email Account</h3>
+      <button id="close-add-overlay" class="icon-btn"><i class="fa fa-xmark"></i></button>
+    </div>
+    <form method="post" class="material-form" style="gap:0.75rem">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="add_account">
+      <label>Display Name <input type="text" name="display_name" placeholder="e.g. Work Gmail"></label>
+      <label>Email Address * <input type="email" name="email" required placeholder="you@gmail.com"></label>
+      <label>Username * <input type="text" name="username" required placeholder="you@gmail.com"></label>
+      <label>Password / App Password * <input type="password" name="password" required></label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem">
+        <label>IMAP Host <input type="text" name="imap_host" value="imap.gmail.com"></label>
+        <label>IMAP Port <input type="number" name="imap_port" value="993"></label>
+        <label>SMTP Host <input type="text" name="smtp_host" value="smtp.gmail.com"></label>
+        <label>SMTP Port <input type="number" name="smtp_port" value="587"></label>
+      </div>
+      <button type="submit"><i class="fa fa-plug"></i> Connect &amp; Test</button>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<input type="hidden" id="account-id" value="{{ account.id|default:'' }}">
+<script>
+  const AJAX_URL   = "{% url 'email_manager:inbox' %}";
+  const CSRF_TOKEN = "{{ csrf_token }}";
+  const ACCOUNT_ID = "{{ account.id|default:'' }}";
+  let currentFolder = "{{ folder }}";
+</script>
+<script src="{% static 'services/email_manager/js/inbox.js' %}"></script>
 {% endblock %}

@@ -4,96 +4,149 @@
 
 {% block content %}
 <div class="dashboard-header">
-    <h1>Profile & AI Settings</h1>
-    <p>Manage your profile, subscription, model preferences, API keys, and token usage.</p>
+  <h1>Profile &amp; Settings</h1>
+  <p>Manage your profile, API keys, subscription, and usage.</p>
 </div>
 
 <div class="settings-grid">
-    <section class="settings-card">
-        <div class="settings-card-header">
-            <div>
-                <h2>Profile</h2>
-                <p class="muted">Plan: <strong>{{ user.subscription_plan|title }}</strong> · {% if user.subscription_active %}Active{% else %}Inactive{% endif %}</p>
-            </div>
+  <!-- Left: Profile + API Keys -->
+  <section class="settings-card">
+    <div class="settings-card-header">
+      <div>
+        <h2>Account Details</h2>
+        <p class="muted">
+          <span class="plan-badge {{ user.subscription_plan }}">
+            <i class="fa fa-crown"></i> {{ user.subscription_plan|title }}
+          </span>
+          &nbsp;·&nbsp;
+          {% if user.subscription_active %}
+            <span style="color:#4ade80"><i class="fa fa-circle" style="font-size:0.55rem"></i> Active</span>
+          {% else %}
+            <span style="color:#ef4444"><i class="fa fa-circle" style="font-size:0.55rem"></i> Inactive</span>
+          {% endif %}
+        </p>
+      </div>
+    </div>
+
+    <form method="post" class="settings-form">
+      {% csrf_token %}
+      <div class="form-section">
+        <h3>Profile</h3>
+        <div class="form-grid two-col">
+          <label>Username {{ profile_form.username }}</label>
+          <label>Email {{ profile_form.email }}</label>
+          <label>Default AI Provider {{ profile_form.preferred_ai_provider }}</label>
+          <label>Default Model {{ profile_form.preferred_model }}</label>
         </div>
+      </div>
 
-        <form method="post" class="settings-form">
-            {% csrf_token %}
-            <div class="form-section">
-                <h3>Account Details</h3>
-                <div class="form-grid two-col">
-                    <label>Username{{ profile_form.username }}</label>
-                    <label>Email{{ profile_form.email }}</label>
-                    <label>Default Provider{{ profile_form.preferred_ai_provider }}</label>
-                    <label>Default Model{{ profile_form.preferred_model }}</label>
-                </div>
-            </div>
+      <div class="form-section">
+        <div class="section-title-row">
+          <div>
+            <h3>API Keys</h3>
+            <p class="muted" style="font-size:0.82rem">Leave blank to keep existing key. Keys are stored securely.</p>
+          </div>
+        </div>
+        <div class="provider-settings">
+          <div class="provider-box">
+            <h4><i class="fa fa-bolt" style="color:#74aaff"></i> Google Gemini</h4>
+            <label>API Key {{ credential_form.gemini_api_key }}</label>
+            <label>Default Model {{ credential_form.gemini_model }}</label>
+          </div>
+          <div class="provider-box">
+            <h4><i class="fa fa-brain" style="color:#4dd9b2"></i> OpenAI</h4>
+            <label>API Key {{ credential_form.openai_api_key }}</label>
+            <label>Default Model {{ credential_form.openai_model }}</label>
+          </div>
+          <div class="provider-box">
+            <h4><i class="fa fa-robot" style="color:#f5a07a"></i> Anthropic Claude</h4>
+            <label>API Key {{ credential_form.anthropic_api_key }}</label>
+            <label>Default Model {{ credential_form.anthropic_model }}</label>
+          </div>
+        </div>
+      </div>
 
-            <div class="form-section">
-                <div class="section-title-row">
-                    <div>
-                        <h3>Provider API Keys</h3>
-                        <p class="muted">Leave a key blank to keep the existing saved value.</p>
-                    </div>
-                </div>
+      <div class="settings-actions">
+        <button type="submit"><i class="fa fa-save"></i> Save Settings</button>
+      </div>
+    </form>
+  </section>
 
-                <div class="provider-settings">
-                    <div class="provider-box">
-                        <h4>Google Gemini</h4>
-                        <label>API Key{{ credential_form.gemini_api_key }}</label>
-                        <label>Model{{ credential_form.gemini_model }}</label>
-                    </div>
-                    <div class="provider-box">
-                        <h4>OpenAI</h4>
-                        <label>API Key{{ credential_form.openai_api_key }}</label>
-                        <label>Model{{ credential_form.openai_model }}</label>
-                    </div>
-                    <div class="provider-box">
-                        <h4>Anthropic Claude</h4>
-                        <label>API Key{{ credential_form.anthropic_api_key }}</label>
-                        <label>Model{{ credential_form.anthropic_model }}</label>
-                    </div>
-                </div>
-            </div>
-
-            <div class="settings-actions">
-                <button type="submit"><i class="fa fa-save"></i> Save Settings</button>
-            </div>
-        </form>
+  <!-- Right: Key status + plan info -->
+  <div style="display:grid;gap:1.25rem;align-content:start">
+    <section class="settings-card">
+      <h2>Configured Providers</h2>
+      <div style="display:grid;gap:0.6rem">
+        {% for item in credential_status %}
+        <div class="credential-status-row">
+          <div class="credential-dot {% if item.masked_key != 'Not configured' %}configured{% else %}missing{% endif %}"></div>
+          <div class="credential-info">
+            <strong>{{ item.label }}</strong>
+            <small>{{ item.masked_key }}{% if item.model %} · {{ item.model }}{% endif %}</small>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
     </section>
 
     <section class="settings-card">
-        <h2>Configured Providers</h2>
-        <div class="usage-list">
-            {% for item in credential_status %}
-                <div class="usage-row">
-                    <div>
-                        <strong>{{ item.label }}</strong>
-                        <p>{{ item.masked_key }}</p>
-                    </div>
-                    <span>{{ item.model|default:"Default model" }}</span>
-                </div>
-            {% endfor %}
+      <h2>Subscription</h2>
+      <div style="display:grid;gap:0.6rem;font-size:0.9rem">
+        <div style="display:flex;justify-content:space-between">
+          <span class="muted">Plan</span>
+          <span class="plan-badge {{ user.subscription_plan }}">{{ user.subscription_plan|title }}</span>
         </div>
+        <div style="display:flex;justify-content:space-between">
+          <span class="muted">Status</span>
+          <span>{% if user.subscription_active %}Active{% else %}Inactive{% endif %}</span>
+        </div>
+        {% if user.subscription_expires_at %}
+        <div style="display:flex;justify-content:space-between">
+          <span class="muted">Expires</span>
+          <span>{{ user.subscription_expires_at|date:"M d, Y" }}</span>
+        </div>
+        {% endif %}
+      </div>
+      <a href="{% url 'pricing' %}" class="btn-subscribe" style="font-size:0.85rem;min-height:36px">
+        <i class="fa fa-star"></i> Upgrade Plan
+      </a>
     </section>
+  </div>
 
-    <section class="settings-card">
+  <!-- Full width: Token Usage -->
+  <section class="settings-card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap">
+      <div>
         <h2>Token Usage</h2>
-        <div class="usage-total">{{ token_totals.total_tokens|default:0 }}</div>
-        <p class="muted">{{ token_totals.input_tokens|default:0 }} input · {{ token_totals.output_tokens|default:0 }} output</p>
-        <div class="usage-list">
-            {% for row in by_conversation %}
-                <div class="usage-row">
-                    <div>
-                        <strong>{{ row.module }} #{{ row.conversation_id }}</strong>
-                        <p>{{ row.provider }} · {{ row.model_name }}</p>
-                    </div>
-                    <span>{{ row.total_tokens }} tokens</span>
-                </div>
-            {% empty %}
-                <p class="muted">No token usage recorded yet.</p>
-            {% endfor %}
+        <p class="muted" style="font-size:0.85rem">Across all AI modules &amp; conversations</p>
+      </div>
+      <div style="text-align:right">
+        <div class="usage-total">{{ token_totals.total_tokens|default:0|floatformat:0 }}</div>
+        <p class="muted" style="font-size:0.82rem">{{ token_totals.input_tokens|default:0 }} in · {{ token_totals.output_tokens|default:0 }} out</p>
+      </div>
+    </div>
+
+    {% if by_conversation %}
+    <div class="usage-list">
+      {% for row in by_conversation %}
+      <div class="usage-row">
+        <div>
+          <strong>{{ row.module }} #{{ row.conversation_id|truncatechars:12 }}</strong>
+          <p style="font-size:0.8rem">
+            <span class="provider-badge provider-{{ row.provider }}">{{ row.provider }}</span>
+            {{ row.model_name }}
+          </p>
         </div>
-    </section>
+        <div style="text-align:right;white-space:nowrap">
+          <strong>{{ row.total_tokens }} tokens</strong>
+          <p style="font-size:0.78rem;color:var(--text-secondary)">{{ row.input_tokens }} in · {{ row.output_tokens }} out</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="muted">No token usage recorded yet. Start chatting to see your usage.</p>
+    {% endif %}
+  </section>
 </div>
 {% endblock %}
