@@ -3,6 +3,7 @@ from django.conf import settings
 
 class AnalysisSession(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    current_url = models.URLField(blank=True, default="")   # URL set once; reused for all messages
     created_at = models.DateTimeField(auto_now_add=True)
 
 class AnalysisMessage(models.Model):

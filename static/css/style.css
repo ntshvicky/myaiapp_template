@@ -1818,3 +1818,41 @@ select option {
     color: var(--text-primary);
     border-color: var(--accent);
 }
+
+/* ─── Website Analyzer URL bar ─── */
+.url-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 0.6rem;
+    padding: 0.55rem 0.9rem;
+    flex-shrink: 0;
+}
+.url-bar-row input[type="url"] {
+    flex: 1;
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    min-height: unset;
+    padding: 0;
+}
+.url-bar-row button {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 0.4rem;
+    padding: 0.35rem 0.8rem;
+    font-size: 0.82rem;
+    cursor: pointer;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: background 0.2s;
+}
+.url-bar-row button:disabled { opacity: 0.6; cursor: not-allowed; }
+.url-bar-row button:hover:not(:disabled) { background: var(--accent-hover); }
