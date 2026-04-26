@@ -7,9 +7,9 @@ whitenoise>=6.6.0
 
 # ── Database ──────────────────────────────────────────────────────────────────
 dj-database-url>=2.1.0
-psycopg2-binary>=2.9.0   # PostgreSQL driver (for Vercel Postgres / Neon / Supabase)
-mysqlclient>=2.1         # MySQL driver (optional, local dev)
-PyMySQL                  # Pure-Python MySQL fallback
+psycopg2-binary>=2.9.0   # PostgreSQL (Vercel Postgres / Neon / Supabase)
+# mysqlclient — needs MySQL dev libs; install locally if using MySQL:
+#   pip install mysqlclient
 
 # ── Environment ───────────────────────────────────────────────────────────────
 python-dotenv>=0.21.0
