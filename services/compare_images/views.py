@@ -1,30 +1,43 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 from django.views import View
-from django.http import JsonResponse
 from .services import ImageCompareService
 from .models import CompareSession, ComparisonResult
 from .forms import CompareForm
 from services.access import FeatureAccessMixin
+from services.ai_router import record_token_usage
+
 
 class CompareView(FeatureAccessMixin, View):
     feature_key = "compare_images"
-    template_name="services/compare_images/compare.html"
+    template_name = "services/compare_images/compare.html"
 
-    def get(self,request):
-        form=CompareForm()
-        return render(request,self.template_name,{"form":form})
+    def get(self, request):
+        form = CompareForm()
+        return render(request, self.template_name, {"form": form})
 
-    def post(self,request):
-        form=CompareForm(request.POST,request.FILES)
+    def post(self, request):
+        form = CompareForm(request.POST, request.FILES)
         if not form.is_valid():
-            return render(request,self.template_name,{"form":form})
-        session=CompareSession.objects.create(user=request.user)
-        img1=form.cleaned_data["image1"]
-        img2=form.cleaned_data["image2"]
-        res=ImageCompareService().compare(img1,img2)
-        comp=ComparisonResult.objects.create(
+            return render(request, self.template_name, {"form": form})
+
+        session = CompareSession.objects.create(user=request.user)
+        img1 = form.cleaned_data["image1"]
+        img2 = form.cleaned_data["image2"]
+
+        res = ImageCompareService().compare(img1, img2)
+
+        comp = ComparisonResult.objects.create(
             session=session,
-            image1=img1, image2=img2,
-            score=res["score"], diff_url=res["diff_url"]
+            image1=img1,
+            image2=img2,
+            score=res["score"],
+            diff_url=res.get("diff_url", ""),
+            ai_description=res.get("ai_description", ""),
         )
-        return render(request,self.template_name,{"form":form,"result":comp})
+
+        record_token_usage(
+            request.user, "compare_images", session.id,
+            "image comparison", res.get("ai_description", "")[:200]
+        )
+
+        return render(request, self.template_name, {"form": form, "result": comp})

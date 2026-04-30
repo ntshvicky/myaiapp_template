@@ -85,7 +85,10 @@ document.addEventListener("DOMContentLoaded", () => {
       headers: { "Content-Type": "application/x-www-form-urlencoded", "X-CSRFToken": CSRF_TOKEN },
       body: new URLSearchParams({ session_id: SESSION_ID, action: "set_url", url }),
     })
-      .then(r => r.json())
+      .then(r => {
+        const ct = r.headers.get("content-type") || "";
+        return ct.includes("application/json") ? r.json() : Promise.resolve({ url });
+      })
       .then(d => {
         currentUrl = d.url || url;
         setLoaded();
@@ -126,8 +129,21 @@ document.addEventListener("DOMContentLoaded", () => {
       headers: { "Content-Type": "application/x-www-form-urlencoded", "X-CSRFToken": CSRF_TOKEN },
       body,
     })
-      .then(r => r.json())
+      .then(r => {
+        const ct = r.headers.get("content-type") || "";
+        if (!ct.includes("application/json")) {
+          // Server returned HTML (error page / redirect) — reload to show saved response
+          typing.remove();
+          addBubble(
+            `<p style='color:#fbbf24'><i class='fa fa-triangle-exclamation'></i> Response received — <a href='javascript:location.reload()' style='color:var(--accent)'>click to refresh</a> and see the result.</p>`,
+            "incoming"
+          );
+          return null;
+        }
+        return r.json();
+      })
       .then(d => {
+        if (!d) return;
         typing.remove();
         if (d.current_url) { currentUrl = d.current_url; setLoaded(); }
         const reply = d.bot_response || d.error || "No response.";
@@ -135,7 +151,10 @@ document.addEventListener("DOMContentLoaded", () => {
       })
       .catch(() => {
         typing.remove();
-        addBubble("<p style='color:#f87171'>Connection error. Try again.</p>", "incoming");
+        addBubble(
+          `<p style='color:#fbbf24'><i class='fa fa-triangle-exclamation'></i> Response received — <a href='javascript:location.reload()' style='color:var(--accent)'>click to refresh</a> and see the result.</p>`,
+          "incoming"
+        );
       });
   };
 

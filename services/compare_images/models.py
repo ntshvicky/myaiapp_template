@@ -11,4 +11,5 @@ class ComparisonResult(models.Model):
     image2 = models.ImageField(upload_to="compares/")
     score = models.FloatField()
     diff_url = models.URLField(blank=True)
+    ai_description = models.TextField(blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
