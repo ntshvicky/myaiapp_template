@@ -277,6 +277,7 @@ let currentSession = null;
 let rewriteCvId    = null;
 let rewriteJdId    = null;
 let scoreChart     = null;
+const resultStore  = {};   // cv_id → result object (safe storage for onclick handlers)
 
 // ── Tab switching ─────────────────────────────────────────────────────────────
 function switchTab(name, btn) {
@@ -369,10 +370,13 @@ function renderResults(results) {
     }
   });
 
-  // Build cards
+  // Build cards — store result objects safely in resultStore, use data-cv-id on buttons
   const container = document.getElementById("cv-cards");
   container.innerHTML = "";
   sorted.forEach((r, i) => {
+    // Save full result in store so onclick handlers never need to embed raw text in HTML
+    resultStore[r.cv_id] = r;
+
     const scoreColor = r.score >= 75 ? "#4ade80" : r.score >= 50 ? "#facc15" : "#f87171";
     const rank = i === 0 ? '<span class="ra-rank-badge gold"><i class="fa fa-trophy"></i> Top Match</span>' :
                  i === 1 ? '<span class="ra-rank-badge silver">#2</span>' :
@@ -380,56 +384,67 @@ function renderResults(results) {
 
     const skillChips = (r.skills_summary || "").split(",").slice(0, 6)
       .map(s => s.trim()).filter(Boolean)
-      .map(s => `<span class="ra-skill-chip">${s}</span>`).join("");
-
-    const emailBtn = r.email
-      ? `<a href="mailto:${r.email}" class="ra-icon-btn" title="Email ${r.email}"><i class="fa fa-envelope"></i></a>`
-      : '';
+      .map(s => `<span class="ra-skill-chip">${s.replace(/</g,"&lt;")}</span>`).join("");
 
     const snippet = (r.details?.analysis || "").slice(0, 220).replace(/</g, "&lt;");
 
-    container.insertAdjacentHTML("beforeend", `
-      <div class="ra-result-card" id="result-card-${r.cv_id}">
-        <div class="ra-result-card-top">
-          <div class="ra-result-avatar"><i class="fa fa-user-tie"></i></div>
-          <div class="ra-result-info">
-            <div class="ra-result-name">${r.candidate_name || "Candidate #" + r.cv_id} ${rank}</div>
-            <div class="ra-result-meta">
-              ${r.total_experience ? `<span><i class="fa fa-clock"></i> ${r.total_experience}</span>` : ""}
-              ${r.email ? `<span><i class="fa fa-envelope"></i> ${r.email}</span>` : ""}
-              ${r.phone ? `<span><i class="fa fa-phone"></i> ${r.phone}</span>` : ""}
-            </div>
-          </div>
-          <div class="ra-score-ring" style="--score-color:${scoreColor}">
-            <svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="18" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="4"/><circle cx="22" cy="22" r="18" fill="none" stroke="${scoreColor}" stroke-width="4" stroke-linecap="round" stroke-dasharray="${(r.score/100)*113} 113" transform="rotate(-90 22 22)"/></svg>
-            <span>${Math.round(r.score)}</span>
+    const card = document.createElement("div");
+    card.className = "ra-result-card";
+    card.id = `result-card-${r.cv_id}`;
+    card.innerHTML = `
+      <div class="ra-result-card-top">
+        <div class="ra-result-avatar"><i class="fa fa-user-tie"></i></div>
+        <div class="ra-result-info">
+          <div class="ra-result-name">${(r.candidate_name || "Candidate #" + r.cv_id).replace(/</g,"&lt;")} ${rank}</div>
+          <div class="ra-result-meta">
+            ${r.total_experience ? `<span><i class="fa fa-clock"></i> ${r.total_experience.replace(/</g,"&lt;")}</span>` : ""}
+            ${r.email ? `<span><i class="fa fa-envelope"></i> ${r.email.replace(/</g,"&lt;")}</span>` : ""}
+            ${r.phone ? `<span><i class="fa fa-phone"></i> ${r.phone.replace(/</g,"&lt;")}</span>` : ""}
           </div>
         </div>
-        <div class="ra-score-bar-row">
-          <div class="ra-score-bar-track"><div class="ra-score-bar-fill" style="width:${r.score}%;background:${scoreColor}"></div></div>
-          <span class="ra-score-label" style="color:${scoreColor}">${Math.round(r.score)}/100</span>
-        </div>
-        ${skillChips ? `<div class="ra-skills-row">${skillChips}</div>` : ""}
-        ${snippet ? `<p class="ra-snippet">${snippet}…</p>` : ""}
-        <div class="ra-result-actions">
-          <button class="ra-btn ra-btn-sm" onclick="viewFullAnalysis(${r.cv_id}, '${(r.candidate_name||'CV').replace(/'/g,"\\'")}', \`${(r.details?.analysis||'').replace(/`/g,"\\`").replace(/\\/g,'\\\\').slice(0,8000)}\`)">
-            <i class="fa fa-eye"></i> Full Analysis
-          </button>
-          <button class="ra-btn ra-btn-sm" onclick="openRewriteModal(${r.cv_id})">
-            <i class="fa fa-wand-magic-sparkles"></i> Rewrite CV
-          </button>
-          <button class="ra-btn ra-btn-sm" onclick="startChatFromResult(${r.cv_id}, '${(r.candidate_name||'CV').replace(/'/g,"\\'")}')">
-            <i class="fa fa-comments"></i> Chat
-          </button>
-          ${emailBtn}
+        <div class="ra-score-ring" style="--score-color:${scoreColor}">
+          <svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="18" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="4"/><circle cx="22" cy="22" r="18" fill="none" stroke="${scoreColor}" stroke-width="4" stroke-linecap="round" stroke-dasharray="${(r.score/100)*113} 113" transform="rotate(-90 22 22)"/></svg>
+          <span>${Math.round(r.score)}</span>
         </div>
       </div>
-    `);
+      <div class="ra-score-bar-row">
+        <div class="ra-score-bar-track"><div class="ra-score-bar-fill" style="width:${r.score}%;background:${scoreColor}"></div></div>
+        <span class="ra-score-label" style="color:${scoreColor}">${Math.round(r.score)}/100</span>
+      </div>
+      ${skillChips ? `<div class="ra-skills-row">${skillChips}</div>` : ""}
+      ${snippet ? `<p class="ra-snippet">${snippet}…</p>` : ""}
+      <div class="ra-result-actions">
+        <button class="ra-btn ra-btn-sm ra-view-analysis-btn" data-cv-id="${r.cv_id}">
+          <i class="fa fa-eye"></i> Full Analysis
+        </button>
+        <button class="ra-btn ra-btn-sm" data-cv-id="${r.cv_id}" onclick="openRewriteModal(this.dataset.cvId)">
+          <i class="fa fa-wand-magic-sparkles"></i> Rewrite CV
+        </button>
+        <button class="ra-btn ra-btn-sm ra-chat-btn" data-cv-id="${r.cv_id}">
+          <i class="fa fa-comments"></i> Chat
+        </button>
+        ${r.email ? `<a href="mailto:${r.email.replace(/</g,"&lt;")}" class="ra-icon-btn" title="Email ${r.email.replace(/</g,"&lt;")}"><i class="fa fa-envelope"></i></a>` : ""}
+      </div>
+    `;
+
+    // Attach click handlers safely (no inline text)
+    card.querySelector(".ra-view-analysis-btn").addEventListener("click", () => {
+      viewFullAnalysis(r.cv_id);
+    });
+    card.querySelector(".ra-chat-btn").addEventListener("click", () => {
+      startChatFromResult(r.cv_id, r.candidate_name || "CV");
+    });
+
+    container.appendChild(card);
   });
 }
 
 // ── View full analysis modal ───────────────────────────────────────────────────
-function viewFullAnalysis(cvId, name, text) {
+function viewFullAnalysis(cvId) {
+  const r = resultStore[cvId];
+  if (!r) return;
+  const name = r.candidate_name || ("CV #" + cvId);
+  const text = (r.details && r.details.analysis) ? r.details.analysis : "No analysis available.";
   document.getElementById("analysis-modal-title").textContent = name + " — Full Analysis";
   const body = document.getElementById("analysis-modal-body");
   let html = text;
