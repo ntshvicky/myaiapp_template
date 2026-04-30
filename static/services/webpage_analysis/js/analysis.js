@@ -129,7 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
       .then(r => r.json())
       .then(d => {
         typing.remove();
-        if (d.current_url) { currentUrl = d.current_url; setUrlStatus("✓ Ready", true); }
+        if (d.current_url) { currentUrl = d.current_url; setLoaded(); }
         const reply = d.bot_response || d.error || "No response.";
         addBubble(renderMd(reply), "incoming");
       })
