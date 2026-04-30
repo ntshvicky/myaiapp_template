@@ -2,14 +2,117 @@
 {% load static %}
 
 {% block title %}Content Writer{% endblock %}
+
 {% block main_content %}
+<div class="dashboard-header compact-header">
   <h1>Content Writer</h1>
-  <textarea id="prompt-input" placeholder="Enter your brief…"></textarea>
-  <button id="gen-btn">Generate</button>
-  <div id="result"></div>
-  <script>
-    const AJAX_URL="{% url 'content_writer:write' %}",
-          CSRF_TOKEN="{{ csrf_token }}";
-  </script>
-  <script src="{% static 'services/content_writer/js/write.js' %}"></script>
+  <p>Generate blog posts, essays, articles &amp; more — powered by Gemini AI.</p>
+</div>
+
+<div class="cw-wrap">
+
+  <!-- ═══ LEFT PANEL — Configuration ═══ -->
+  <div class="cw-panel">
+    <div class="cw-panel-header">
+      <i class="fa fa-sliders"></i> Configure
+    </div>
+    <div class="cw-panel-body">
+
+      <!-- Content type -->
+      <div class="cw-field">
+        <label>Content Type</label>
+        <div class="cw-select-grid" id="type-grid">
+          <div class="cw-select-chip active" data-val="Blog Post">📝 Blog Post</div>
+          <div class="cw-select-chip" data-val="Article">📰 Article</div>
+          <div class="cw-select-chip" data-val="Essay">📖 Essay</div>
+          <div class="cw-select-chip" data-val="Social Media Post">📱 Social Media</div>
+          <div class="cw-select-chip" data-val="Product Description">🛒 Product Desc.</div>
+          <div class="cw-select-chip" data-val="Email Newsletter">📧 Newsletter</div>
+          <div class="cw-select-chip" data-val="Press Release">📣 Press Release</div>
+          <div class="cw-select-chip" data-val="LinkedIn Post">💼 LinkedIn</div>
+        </div>
+      </div>
+
+      <!-- Tone -->
+      <div class="cw-field">
+        <label>Tone</label>
+        <div class="cw-select-grid" id="tone-grid">
+          <div class="cw-select-chip active" data-val="Professional">🤝 Professional</div>
+          <div class="cw-select-chip" data-val="Casual">😊 Casual</div>
+          <div class="cw-select-chip" data-val="Persuasive">💡 Persuasive</div>
+          <div class="cw-select-chip" data-val="Informative">📚 Informative</div>
+          <div class="cw-select-chip" data-val="Inspirational">🌟 Inspirational</div>
+          <div class="cw-select-chip" data-val="Humorous">😄 Humorous</div>
+        </div>
+      </div>
+
+      <!-- Target word count -->
+      <div class="cw-field">
+        <label>Target Length</label>
+        <div class="cw-slider-row">
+          <input type="range" id="word-count-slider" min="100" max="2000" step="50" value="500">
+          <span class="cw-slider-val" id="word-count-label">~500 words</span>
+        </div>
+      </div>
+
+      <!-- Keywords / focus -->
+      <div class="cw-field">
+        <label>Keywords / Focus (optional)</label>
+        <input type="text" id="keywords-input" placeholder="e.g. AI, productivity, remote work">
+      </div>
+
+      <!-- Main topic -->
+      <div class="cw-field" style="flex:1;display:flex;flex-direction:column;">
+        <label>Topic / Brief <span style="color:var(--accent)">*</span></label>
+        <textarea id="prompt-input" placeholder="Describe what you want to write about…&#10;&#10;e.g. The impact of AI on modern education and why schools should adapt their curriculum now." style="flex:1;min-height:120px"></textarea>
+      </div>
+
+      <!-- Generate -->
+      <button class="cw-gen-btn" id="gen-btn">
+        <i class="fa fa-wand-magic-sparkles"></i> Generate Content
+      </button>
+
+    </div>
+  </div>
+
+  <!-- ═══ RIGHT PANEL — Output ═══ -->
+  <div class="cw-panel" style="position:relative">
+    <div class="cw-output-header">
+      <div class="cw-output-title"><i class="fa fa-file-lines" style="color:var(--accent);margin-right:0.4rem"></i>Generated Content</div>
+      <span class="cw-output-meta" id="word-count-out"></span>
+      <div class="cw-output-actions">
+        <button id="copy-btn" title="Copy to clipboard"><i class="fa fa-copy"></i> Copy</button>
+        <button id="download-btn" title="Download as text file"><i class="fa fa-download"></i> Download</button>
+        <button id="clear-btn" title="Clear output"><i class="fa fa-trash"></i> Clear</button>
+      </div>
+    </div>
+
+    <!-- Quick prompt chips -->
+    <div class="cw-quick-chips" id="quick-chips">
+      <span class="cw-quick-chip" data-prompt="10 tips for improving productivity while working from home">10 WFH productivity tips</span>
+      <span class="cw-quick-chip" data-prompt="The future of artificial intelligence in healthcare">AI in healthcare</span>
+      <span class="cw-quick-chip" data-prompt="Why every startup needs a strong content marketing strategy">Startup content strategy</span>
+      <span class="cw-quick-chip" data-prompt="A beginner's guide to sustainable living and eco-friendly habits">Sustainable living guide</span>
+      <span class="cw-quick-chip" data-prompt="The benefits of mindfulness meditation and how to get started">Mindfulness for beginners</span>
+      <span class="cw-quick-chip" data-prompt="How to build a personal brand on social media in 2025">Personal branding</span>
+    </div>
+
+    <!-- Output area -->
+    <div class="cw-output-body" id="output-area">
+      <div class="cw-placeholder" id="cw-placeholder">
+        <div class="cw-placeholder-icon"><i class="fa fa-pen-nib"></i></div>
+        <h3>Ready to Write</h3>
+        <p>Fill in the configuration on the left and click <strong>Generate Content</strong> — or pick a quick prompt above.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Hidden vars -->
+<script>
+  const AJAX_URL   = "{% url 'content_writer:write' %}";
+  const CSRF_TOKEN = "{{ csrf_token }}";
+</script>
+<script src="{% static 'services/content_writer/js/write.js' %}"></script>
 {% endblock %}
