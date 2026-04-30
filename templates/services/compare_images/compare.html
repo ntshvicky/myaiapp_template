@@ -61,18 +61,6 @@
     {% if result %}
 
     <!-- Score card -->
-    {% with pct=result.score|floatformat:0 %}
-    {% if result.score >= 0.9 %}{% with sc="#4ade80" label="Very similar — likely the same image or minor edits" %}
-    {% include "services/compare_images/_score_card.html" %}{% endwith %}
-    {% elif result.score >= 0.7 %}{% with sc="#fbbf24" label="Moderately similar — noticeable differences exist" %}
-    {% include "services/compare_images/_score_card.html" %}{% endwith %}
-    {% elif result.score >= 0.4 %}{% with sc="#fb923c" label="Low similarity — images differ significantly" %}
-    {% include "services/compare_images/_score_card.html" %}{% endwith %}
-    {% else %}{% with sc="#f87171" label="Very different — distinct content" %}
-    {% include "services/compare_images/_score_card.html" %}{% endwith %}{% endif %}
-    {% endwith %}
-
-    <!-- Score card inline (no sub-template needed) -->
     <div class="settings-card" style="gap:0.85rem">
       <div style="display:flex;align-items:center;gap:0.6rem;margin-bottom:0.25rem">
         <i class="fa fa-chart-pie" style="color:var(--accent)"></i>
